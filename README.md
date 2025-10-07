@@ -69,7 +69,7 @@
 </details>
 
 <details>
-<summary>🗄️ <b>F. Database Management</b></summary>
+<summary>🗄️ <b>Database Management</b></summary>
 
 - 🧱 Create Database – Initialize tables and schemas  
 - 🧹 Delete Database – Reset or remove all data  
