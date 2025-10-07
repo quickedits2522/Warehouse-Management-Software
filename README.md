@@ -102,13 +102,9 @@ cd warehouse-inventory-management
 
 # 3️⃣ Install dependencies
 pip install -r requirements.txt
-# or
-npm install
 
 # 4️⃣ Run the application
 python app.py
-# or
-npm start
 
 # 5️⃣ Open your browser
 http://localhost:5000
