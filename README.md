@@ -17,9 +17,6 @@
 - [🧰 Tech Stack](#-tech-stack)
 - [⚙️ Installation & Setup](#️-installation--setup)
 - [📸 Screenshots](#-screenshots)
-- [🤝 Contributing](#-contributing)
-- [📝 License](#-license)
-- [🌟 Support](#-show-your-support)
 
 ---
 
