@@ -41,5 +41,3 @@ def record_sale():
     sale_amt = mrp*qty
     mycursor.execute("INSERT INTO SALES(Customer_Name, Sale_Amount, Date_Of_Sale) VALUES(%a, %b, %c)"(custm_name, sale_amt, today))
     mycon.commit()
-
-def genbill():
