@@ -6,7 +6,6 @@
 ![Flask](https://img.shields.io/badge/Flask-Backend-black?logo=flask&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/Frontend-JavaScript-yellow?logo=javascript&logoColor=black)
 ![MySQL](https://img.shields.io/badge/Database-MySQL-orange?logo=mysql&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green?logo=open-source-initiative&logoColor=white)
 ![Status](https://img.shields.io/badge/Status-Active-success)
 
 > 🚀 A complete end-to-end warehouse management system to handle users, inventory, sales, transportation, purchases, and database control efficiently.
@@ -27,7 +26,7 @@
 ## 📦 Features  
 
 <details open>
-<summary>👥 <b>A. User Management</b></summary>
+<summary>👥 <b>User Management</b></summary>
 
 - ➕ Add User – Register new users  
 - ❌ Remove User – Delete inactive users  
@@ -37,7 +36,7 @@
 </details>
 
 <details>
-<summary>📦 <b>B. Stock Management</b></summary>
+<summary>📦 <b>Stock Management</b></summary>
 
 - 🆕 Add New Product – Insert items into inventory  
 - 🛠️ Update Product Info – Modify product details  
@@ -47,7 +46,7 @@
 </details>
 
 <details>
-<summary>💰 <b>C. Sales Management</b></summary>
+<summary>💰 <b>Sales Management</b></summary>
 
 - 🛒 Sell Product – Record and track sales  
 - 🧾 Generate GST Bill / Invoice – Calculate tax and print invoices  
@@ -55,7 +54,7 @@
 </details>
 
 <details>
-<summary>🚚 <b>D. Transportation Management</b></summary>
+<summary>🚚 <b>Transportation Management</b></summary>
 
 - 🚛 Transport Vehicle Info – Manage vehicles and drivers  
 - 📦 Track Goods – Monitor incoming/outgoing items  
@@ -64,7 +63,7 @@
 </details>
 
 <details>
-<summary>🛍️ <b>E. Purchase Management</b></summary>
+<summary>🛍️ <b>Purchase Management</b></summary>
 
 - 📝 Place Orders – Create purchase requests  
 - 📋 List Orders – Review all active/completed orders  
@@ -91,7 +90,7 @@
 | ⚙️ **Backend** | Python (Flask / Django) |
 | 🗃️ **Database** | MySQL / SQLite / PostgreSQL |
 | 🧾 **Reporting** | PDF / Excel generation tools |
-| 🔐 **Authentication** | JWT / Custom User System |
+| 🔐 **Authentication** | Custom User Auth System |
 
 ---
 
@@ -124,25 +123,3 @@ http://localhost:5000
 
 _Add screenshots or GIFs of your dashboard, stock management, or billing interface here._  
 
----
-
-## 🤝 Contributing  
-
-Contributions are always welcome 💡  
-
-1. 🍴 Fork the repository  
-2. 🌿 Create a new branch (`feature/new-feature`)  
-3. 💾 Commit your changes  
-4. 🔁 Submit a Pull Request  
-
----
-
-## 📝 License  
-
-This project is licensed under the [MIT License](LICENSE).  
-
----
-
-## 🌟 Show Your Support  
-
-If this project helped you, please ⭐ **star** the repository — it motivates us to keep improving! 🚀  
