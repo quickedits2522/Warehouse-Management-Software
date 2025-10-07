@@ -84,8 +84,8 @@
 | Category | Technology |
 |-----------|-------------|
 | 💻 **Frontend** | HTML, CSS, JavaScript |
-| ⚙️ **Backend** | Python (Flask / Django) |
-| 🗃️ **Database** | MySQL / SQLite / PostgreSQL |
+| ⚙️ **Backend** | Python (Flask) |
+| 🗃️ **Database** | MySQL |
 | 🧾 **Reporting** | PDF / Excel generation tools |
 | 🔐 **Authentication** | Custom User Auth System |
 
