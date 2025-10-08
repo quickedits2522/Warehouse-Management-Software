@@ -6,9 +6,9 @@ mycursor = mycon.cursor()
 
 def create_init_db():
     init_tables=["CREATE TABLE IF NOT EXISTS USER(UserId int PRIMARY KEY AUTO_INCREMENT, Name varchar(25), Department varchar(10), Salary int)",
-                        "CREATE TABLE IF NOT EXISTS PRODUCTS(ProductID int PRIMARY KEY AUTO_INCREMENT, Product_Name varchar(30), Cost_Price float, MRP float, Quantity int)",
-                        "CREATE TABLE IF NOT EXISTS SALES(BillNo int PRIMARY KEY AUTO_INCREMENT, Customer_Name varchar(25), Products varchar(255), QTY int, Sale_Amount float, Date_Of_Sale date)",
-                        "CREATE TABLE IF NOT EXISTS TRANSPORT(ShipmentID int PRIMARY KEY AUTO_INCREMENT, BillNo int, Address varchar(100), FOREIGN KEY (BillNo) REFERENCES SALES(BillNo))"]
+                "CREATE TABLE IF NOT EXISTS PRODUCTS(ProductID int PRIMARY KEY AUTO_INCREMENT, Product_Name varchar(30), Cost_Price float, MRP float, Quantity int)",
+                "CREATE TABLE IF NOT EXISTS SALES(BillNo int PRIMARY KEY AUTO_INCREMENT, Customer_Name varchar(25), Products varchar(255), QTY int, Sale_Amount float, Date_Of_Sale date)",
+                "CREATE TABLE IF NOT EXISTS TRANSPORT(ShipmentID int PRIMARY KEY AUTO_INCREMENT, BillNo int, Address varchar(100), FOREIGN KEY (BillNo) REFERENCES SALES(BillNo))"]
 
     for i in init_tables:
         mycursor.execute(i)
