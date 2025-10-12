@@ -13,10 +13,12 @@ import qrcode
 import io
 from flask import Flask, render_template, request, redirect, url_for, flash
 
+# Establish connection to MySQL database
 mycon = ms.connect(user = "root", password = "mysql", host = "localhost", database = "WMS", use_pure="True")
 mycursor = mycon.cursor()
 
 def create_init_db():
+    # Create all required tables if they do not exist
     init_tables=["CREATE TABLE IF NOT EXISTS USER(UserID int PRIMARY KEY, Name varchar(25), Department varchar(10), Salary int)",
                 "CREATE TABLE IF NOT EXISTS PRODUCTS(ProductID int PRIMARY KEY, Product_Name varchar(30), Cost_Price float, MRP float, Quantity int)",
                 "CREATE TABLE IF NOT EXISTS SALES(BillNo int PRIMARY KEY, Customer_Name varchar(25), Products varchar(255), QTY int, Sale_Amount float, Date_Of_Sale date)",
@@ -29,6 +31,7 @@ def create_init_db():
     mycon.commit()
 
 def delete_db():
+    # Delete all tables from the database (irreversible)
     print("WARNING! : This process is irreversible, All your data will be deleted permanently!!")
     usr_confirm = input("Do you want to continue (Y/N) : ")
     if usr_confirm in "Yy":
@@ -45,6 +48,7 @@ def delete_db():
         print("Invalid Choice")
 
 def record_sale(custm_name, address, product, qty, today, status):
+    # Record a sale, update inventory, generate bill, and record shipment
     mycursor.execute("SELECT MRP, Quantity from PRODUCTS where Product_Name = %s",(product,))
     output = mycursor.fetchall()
     mrp = output[0][0]
@@ -52,30 +56,33 @@ def record_sale(custm_name, address, product, qty, today, status):
     print(f"MRP of {product} : ₹{mrp}")
 
     if qty <= qty_avl:
-        sale_amt = mrp*qty*1.18
+        sale_amt = mrp*qty*1.18  # Calculate sale amount with GST
         mycursor.execute("INSERT INTO SALES (Customer_Name, Products, QTY, Sale_Amount, Date_Of_Sale) VALUES (%s, %s, %s, %s, %s)",(custm_name, product, qty, sale_amt, today))
         mycon.commit()
         mycursor.execute("SELECT BillNo FROM SALES WHERE Sale_Amount = %s", (sale_amt,))
         bill_no = mycursor.fetchall()[0][0]
         print(f"Sale of {product} with qty : {qty} @ ₹{mrp} recorded")
         items = (product, qty)
-        gen_bill(bill_no, custm_name, address, items)
-        record_shipment(bill_no, address, status)
+        gen_bill(bill_no, custm_name, address, items)  # Generate PDF invoice
+        record_shipment(bill_no, address, status)      # Record shipment info
 
     else :
         print("Purchase quantity exceed available quantity")
 
 def record_shipment(billno, address, status): # This function is auto handled by the record_sale function. (Not to be included in the menu)
+    # Record shipment details for an order
     mycursor.execute("INSERT INTO TRANSPORT (BillNo, Address, Status) VALUES (%s, %s, %s)",(billno, address, status))
     mycon.commit()
     print("Recorded Shipment info for the order")
 
-def shipping_info():
+def shipping_info(): # View all shipment info
+    # Display all shipment records
     mycursor.execute("SELECT * FROM TRANSPORT")
     table = from_db_cursor(mycursor)
     print(table)
 
-def search_ship():
+def search_ship(): # Search shipment by ShipmentID
+    # Search for a shipment using ShipmentID
     shipID = input("Enter the ShipmentID to be searched : ")
 
     try:
@@ -87,7 +94,8 @@ def search_ship():
     except:
         print(f"No records found for the ShipmentID : {shipID}")
 
-def manual_update():
+def manual_update(): # Manual Update of any table
+    # Update any record in any table manually
     table_name = input("Enter the name of the table to be updated : ")
     column_name = input("Enter the column name to be updated : ")
     value = input("Enter value to be updated : ")
@@ -102,7 +110,8 @@ def manual_update():
     except :
         print("Error Encountered")
 
-def manual_select():
+def manual_select(): # Manual Select Details of any table
+    # Select and display records from any table
     table_name = input("Enter the name of the table to be updated : ")
     column_name = input("Enter the column name to be updated (Enter '*' to display all records) : ")
 
@@ -114,7 +123,8 @@ def manual_select():
     except :
         print("Error Encountered")
 
-def set_settings():
+def set_settings(): # Should be used only once to set the company details
+    # Set company details and GST settings
     Company_Name = input("Enter Company Name : ")
     Company_ID = int(input("Enter Company ID : "))
     GST_No = input("Enter GST Registration Number : ")
@@ -127,6 +137,7 @@ def set_settings():
     print("Settings Saved Successfully")
 
 def gen_bill(bill_no, customer_name, customer_address, items):
+    # Generate a GST invoice PDF for a sale
 
     mycursor.execute("SELECT CompanyName, GSTIN, UPI fROM SETTINGS")
     data = mycursor.fetchall()
@@ -272,10 +283,12 @@ app.secret_key = "328bh23jh5bh25h5j2j5jh21bj14jk1b5j"
 
 @app.route("/")
 def index():
+    # Render the home page
     return render_template("index.html")
 
 @app.route("/add_order", methods=["GET", "POST"])
 def add_order():
+    # Handle adding a new order via web form
     cursor = mycon.cursor(dictionary=True)
     cursor.execute("SELECT Product_Name FROM PRODUCTS")
     products = cursor.fetchall()
