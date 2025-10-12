@@ -9,7 +9,7 @@ while True:
     b =  input("Enter username: ")
     c = input("Enter department: ")
     d = int(input("Enter salary: "))
-    cursor.execute("insert into users values =%(s)"(a,b,c,d))
+    cursor.execute("insert into users values =%(s)"%(a,b,c,d))
     m = input("Do you wish to continue?(y/n) ")
     if m=='y' or m=='Y':
         break
@@ -94,3 +94,4 @@ def  update_product():
     
     
  
+
