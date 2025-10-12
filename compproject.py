@@ -8,7 +8,7 @@ while True:
     a = input("Enter  userID: ")
     b =  input("Enter username: ")
     c = input("Enter  department: ")
-    d = input("Enter  salary: ")
+    d = int(input("Enter  salary: "))
     cursor.execute("insert into users values =%(s)"(a,b,c,d))
     m = input("Do you wish to continue?(y/n) ")
     if m=='y' or m=='Y':
@@ -18,8 +18,8 @@ while True:
     e = input("Enter  productID: ")
     f = input("Enter product name: ")
     g = input("Enter cost price of product: ")
-    h = input("Enter MRP of product: ")
-    i = input("Enter  quantity of product: ")
+    h = int(input("Enter MRP of product: "))
+    i = int(input("Enter  quantity of product: "))
     cursor.execute("insert into products values%(s)" %(e,f,g,h,i))
     n = input("Do you wish to continue?(y/n) ")
     if n=='y' or n=='Y':
@@ -81,3 +81,4 @@ def  update_product():
     cursor.execute("update Products set %s = %s where userID='%s'"%(column,value2,value1))
     con.commit()
     print("Value successfully updated")
+
