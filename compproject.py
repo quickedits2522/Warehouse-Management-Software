@@ -5,29 +5,32 @@ n = y
 m = y
 
 while True:
-    a = input("Enter  userID: ")
+    a = input("Enter userID: ")
     b =  input("Enter username: ")
-    c = input("Enter  department: ")
-    d = int(input("Enter  salary: "))
-    cursor.execute("insert into users values =%(s)"(a,b,c,d))
+    c = input("Enter department: ")
+    d = int(input("Enter salary: "))
+    cursor.execute("insert into users values =%(s)"%(a,b,c,d))
     m = input("Do you wish to continue?(y/n) ")
     if m=='y' or m=='Y':
         break
     
 while True:
-    e = input("Enter  productID: ")
+    e = input("Enter productID: ")
     f = input("Enter product name: ")
     g = input("Enter cost price of product: ")
-    h = int(input("Enter MRP of product: "))
-    i = int(input("Enter  quantity of product: "))
+    h = input("Enter MRP of product: ")
+    i = input("Enter quantity of product: ")
     cursor.execute("insert into products values%(s)" %(e,f,g,h,i))
     n = input("Do you wish to continue?(y/n) ")
     if n=='y' or n=='Y':
         break
     
 def add_user():
-    values = eval(input("Enter the entry to be inserted into the table: "))
-    cursor.execute("insert into users values(%s)"%(values,))
+    id = input("Enter userID: ")
+    name = input("Enter username: ")
+    dept = input("Enter department: ")
+    sal = int(input("Enter salary: "))
+    cursor.execute("insert into users values(%s)"%(id, name, dept,sal))
     con.commit()
     print("Entry successfully added to the table")
 
@@ -54,13 +57,17 @@ def update_user():
     
 
 def add_stock():
-    value = eval(input("Enter entry to be added to 'Products': "))
-    cursor.execute("insert into Products values(%s)"%(value,))
+    id = input("Enter productID: ")
+    name = input("Enter product name: ")
+    cost = int(input("Enter cost price of product: "))
+    mrp = int(input("Enter MRP of product: "))
+    qty = int(input("Enter quantity of product: "))
+    cursor.execute("insert into Products values(%s)"%(id, name, cost, mrp,qty))
     con.commit()
     print("Record successfully added")
 
 
-def premove_product():
+def remove_product():
     value = input("Enter the productID of the entry to be deleted: ")
     cursor.execute("delete from Products where %s = %s"%(ProductID, value))
     con.commit()
@@ -81,4 +88,10 @@ def  update_product():
     cursor.execute("update Products set %s = %s where userID='%s'"%(column,value2,value1))
     con.commit()
     print("Value successfully updated")
+
+    
+
+    
+    
+ 
 
