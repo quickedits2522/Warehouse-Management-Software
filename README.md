@@ -95,7 +95,7 @@
 
 ```bash
 # 1️⃣ Clone the repository
-git clone https://github.com/yourusername/warehouse-inventory-management.git
+git clone https://github.com/quickedites2522/warehouse-inventory-management.git
 
 # 2️⃣ Navigate to the project folder
 cd warehouse-inventory-management
