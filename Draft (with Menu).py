@@ -19,6 +19,7 @@ mycon = ms.connect(user = "root", passwd = "mysql", host = "localhost", database
 mycursor = mycon.cursor()
 
 def add_user():
+    
     userid = input("Enter userID: ")
     name = input("Enter username: ")
     dept = input("Enter department: ")
@@ -58,7 +59,7 @@ def add_stock():
     cost = int(input("Enter cost price of product: "))
     mrp = int(input("Enter MRP of product: "))
     qty = int(input("Enter quantity of product: "))
-    mycursor.execute("insert into Products values(%s)"%(pdtid, name, cost, mrp,qty))
+    mycursor.execute("insert into Products values(%s, %s, %s, %s, %s)"%(pdtid, name, cost, mrp,qty))
     mycon.commit()
     print("Record successfully added")
 
@@ -376,13 +377,13 @@ def main_menu():
     while True:
         
         print("""
-Main Menu:
-1. User Management
-2. Stock Management
-3. Sales Management
-4. Shipment Management
-5. Database Management
-6. Exit
+                        Main Menu:
+                        1. User Management
+                        2. Stock Management
+                        3. Sales Management
+                        4. Shipment Management
+                        5. Database Management
+                        6. Exit
         """)
 
         choice = input("Enter your choice (1-6): ")
@@ -394,12 +395,12 @@ Main Menu:
             while True:
                 
                 print("""
-User Management:
-a. Add User
-b. Remove User
-c. Search User
-d. Update User Info
-e. Back to Main Menu
+                            User Management:
+                            a. Add User
+                            b. Remove User
+                            c. Search User
+                            d. Update User Info
+                            e. Back to Main Menu
                 """)
                 
                 ch = input("Enter your choice: ").lower()
@@ -433,12 +434,12 @@ e. Back to Main Menu
             while True:
                 
                 print("""
-Stock Management:
-a. Add Product
-b. Remove Product
-c. Search Product
-d. Update Product Info
-e. Back to Main Menu
+                            Stock Management:
+                            a. Add Product
+                            b. Remove Product
+                            c. Search Product
+                            d. Update Product Info
+                            e. Back to Main Menu
                 """)
                 
                 ch = input("Enter your choice: ").lower()
@@ -472,10 +473,10 @@ e. Back to Main Menu
             while True:
                 
                 print("""
-Sales Management:
-a. Record Sale
-b. Generate GST Bill
-c. Back to Main Menu
+                            Sales Management:
+                            a. Record Sale
+                            b. Generate GST Bill
+                            c. Back to Main Menu
                 """)
                 
                 ch = input("Enter your choice: ").lower()
@@ -514,10 +515,10 @@ c. Back to Main Menu
             while True:
                 
                 print("""
-Shipment Management:
-a. List of Shipments
-b. Search Shipment
-c. Back to Main Menu
+                            Shipment Management:
+                            a. List of Shipments
+                            b. Search Shipment
+                            c. Back to Main Menu
                 """)
                 
                 ch = input("Enter your choice: ").lower()
@@ -545,11 +546,11 @@ c. Back to Main Menu
             while True:
                 
                 print("""
-Database Management:
-a. Delete Entire Database
-b. Update Rows/Columns
-c. Select Custom Records
-d. Back to Main Menu
+                                Database Management:
+                                a. Delete Entire Database
+                                b. Update Rows/Columns
+                                c. Select Custom Records
+                                d. Back to Main Menu
                 """)
                 
                 ch = input("Enter your choice: ").lower()
