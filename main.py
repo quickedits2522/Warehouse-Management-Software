@@ -19,7 +19,8 @@ mycursor = mycon.cursor()
 
 def create_init_db():
     # Create all required tables if they do not exist
-    init_tables=["CREATE TABLE IF NOT EXISTS USER(UserID int PRIMARY KEY, Name varchar(25), Department varchar(10), Salary int)",
+    init_tables=["CREATE DATABASE IF NOT EXISTS WMS",
+                "CREATE TABLE IF NOT EXISTS USER(UserID int PRIMARY KEY, Name varchar(25), Department varchar(10), Salary int)",
                 "CREATE TABLE IF NOT EXISTS PRODUCTS(ProductID int PRIMARY KEY, Product_Name varchar(30), Cost_Price float, MRP float, Quantity int)",
                 "CREATE TABLE IF NOT EXISTS SALES(BillNo int PRIMARY KEY, Customer_Name varchar(25), Products varchar(255), QTY int, Sale_Amount float, Date_Of_Sale date)",
                 "CREATE TABLE IF NOT EXISTS TRANSPORT(ShipmentID int PRIMARY KEY, BillNo int, Address varchar(100), Status varchar(25), FOREIGN KEY (BillNo) REFERENCES SALES(BillNo) ON DELETE CASCADE)",
@@ -65,6 +66,8 @@ def record_sale(custm_name, address, product, qty, today, status):
         items = (product, qty)
         gen_bill(bill_no, custm_name, address, items)  # Generate PDF invoice
         record_shipment(bill_no, address, status)      # Record shipment info
+        mycursor.execute("UPDATE PRODUCTS SET Quantity = Quantity - %s WHERE Product_Name = %s", (qty, product))
+        mycon.commit()
 
     else :
         print("Purchase quantity exceed available quantity")
@@ -277,14 +280,26 @@ def gen_bill(bill_no, customer_name, customer_address, items):
 
 # This part is Flask related : 
 
-'''
 app = Flask(__name__)
 app.secret_key = "328bh23jh5bh25h5j2j5jh21bj14jk1b5j"
 
 @app.route("/")
 def index():
     # Render the home page
-    return render_template("index.html")
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute("SELECT COUNT(ProductID) FROM PRODUCTS")
+    no_of_items = cursor.fetchall()
+    cursor.execute("SELECT COUNT(UserID) FROM USER")
+    no_of_users = cursor.fetchall()
+    cursor.execute("SELECT COUNT(ShipmentID) FROM TRANSPORT")
+    no_of_ships = cursor.fetchall()
+    cursor.execute("SELECT SUM(Sale_Amount) FROM SALES")
+    revenue = cursor.fetchall()
+
+    return render_template("index.html", no_of_items=no_of_items[0]['COUNT(ProductID)'], 
+                           no_of_users=no_of_users[0]['COUNT(UserID)'],
+                           no_of_ships=no_of_ships[0]['COUNT(ShipmentID)'],
+                           revenue=int(revenue[0]['SUM(Sale_Amount)']))
 
 @app.route("/add_order", methods=["GET", "POST"])
 def add_order():
@@ -308,4 +323,12 @@ def add_order():
     
     return render_template("add_stock.html", products=products)
 
-app.run(host="localhost", port = 81)'''
+@app.route("/settings", methods=["GET", "POST"])
+def settings():
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM SETTINGS")
+    current_settings = cursor.fetchall()
+    print(current_settings)
+    return render_template("settings.html", settings=current_settings[0]) 
+    
+app.run(host="localhost", port = 81, debug=True)
