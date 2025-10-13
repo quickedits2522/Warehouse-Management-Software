@@ -483,21 +483,22 @@ def main_menu():
 
                 if ch == 'a':
                     
-                    cname = input("Enter Customer Name: ")
-                    addr = input("Enter Customer Address: ")
+                    """custm_name = input("Enter Customer Name: ")
+                    address = input("Enter Customer Address: ")
                     product = input("Enter Product Name: ")
                     qty = int(input("Enter Quantity: "))
                     today = date.today()
-                    status = input("Enter Shipment Status: ")
-                    record_sale(cname, addr, product, qty, today, status)
+                    status = input("Enter Shipment Status: ")"""
+                    record_sale(custm_name, address, product, qty, today, status)
 
                 elif ch == 'b':
-                    bill_no = input("Enter Bill Number: ")
-                    cname = input("Enter Customer Name: ")
-                    addr = input("Enter Customer Address: ")
+                    """bill_no = input("Enter Bill Number: ")
+                    customer_name = input("Enter Customer Name: ")
+                    customer_address = input("Enter Customer Address: ")
                     product = input("Enter Product Name: ")
                     qty = int(input("Enter Quantity: "))
-                    gen_bill(bill_no, cname, addr, (product, qty))
+                    items=(product, qty)"""
+                    gen_bill(bill_no, customer_name, customer_address, items)
 
                 elif ch == 'c':
                     break
