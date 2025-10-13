@@ -18,53 +18,26 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 mycon = ms.connect(user = "root", passwd = "mysql", host = "localhost", database = "WMS", use_pure="True")
 mycursor = mycon.cursor()
 
-n = y
-m = y
-
-while True:
-    
-    a = input("Enter userID: ")
-    b =  input("Enter username: ")
-    c = input("Enter department: ")
-    d = int(input("Enter salary: "))
-    mycursor.execute("insert into users values =%(s)"%(a,b,c,d))
-    m = input("Do you wish to continue?(y/n) ")
-    if m=='y' or m=='Y':
-        break
-    
-while True:
-    
-    e = input("Enter productID: ")
-    f = input("Enter product name: ")
-    g = input("Enter cost price of product: ")
-    h = input("Enter MRP of product: ")
-    i = input("Enter quantity of product: ")
-    mycursor.execute("insert into products values%(s)" %(e,f,g,h,i))
-    n = input("Do you wish to continue?(y/n) ")
-    if n=='y' or n=='Y':
-        break
-    
 def add_user():
-    
-    id = input("Enter userID: ")
+    userid = input("Enter userID: ")
     name = input("Enter username: ")
     dept = input("Enter department: ")
     sal = int(input("Enter salary: "))
-    mycursor.execute("insert into users values(%s)"%(id, name, dept,sal))
+    mycursor.execute("insert into user (UserId, Name, Department, Salary) values(%s, %s, %s, %s)"%(userid, name, dept,sal))
     mycon.commit()
     print("Entry successfully added to the table")
 
 def remove_user():
     
     delete = input("Enter userID of the entry to be deleted: ")
-    mycursor.execute("delete from users where userID = '%s'"%(delete))
+    mycursor.execute("delete from user where UserID = '%s'"%(delete))
     mycon.commit()
     print("Entry successfully deleted from the table")
 
 def search_user():
     
     user = input("Enter userID of the user to be found: ")
-    mycursor.execute("select * from users where userID = '%s'"%(user,))
+    mycursor.execute("select * from user where UserID = '%s'"%(user,))
     data = mycursor.fetchall()
     for row in data:
         print(row)
@@ -74,32 +47,32 @@ def update_user():
     column = input("Enter column where the value is to be changed: ")
     value1 = input("Enter userID of the entry to be updated: ")
     value2 = input("Enter updated value: ")
-    mycursor.execute("update users set %s = %s where userID='%s'"%(column,value2,value1))
+    mycursor.execute("update user set %s = %s where UserID='%s'"%(column,value2,value1))
     mycon.commit()
     print("Value successfully updated")
     
 def add_stock():
     
-    id = input("Enter productID: ")
+    pdtid = input("Enter productID: ")
     name = input("Enter product name: ")
     cost = int(input("Enter cost price of product: "))
     mrp = int(input("Enter MRP of product: "))
     qty = int(input("Enter quantity of product: "))
-    mycursor.execute("insert into Products values(%s)"%(id, name, cost, mrp,qty))
+    mycursor.execute("insert into Products values(%s)"%(pdtid, name, cost, mrp,qty))
     mycon.commit()
     print("Record successfully added")
 
 def remove_stock():
     
     value = input("Enter the productID of the entry to be deleted: ")
-    mycursor.execute("delete from Products where %s = %s"%(ProductID, value))
+    mycursor.execute("delete from Products where ProductID = %s"%(value,))
     mycon.commit()
     print("Entry successfully deleted from the table")
 
 def search_stock():
     
     product = input("Enter the productID of the entry to be dislayed: ")
-    mycursor.execute("Select * from Products where %s = %s"%(ProductID, product))
+    mycursor.execute("Select * from Products where ProductID = %s"%(product,))
     data = mycursor.fetchall()
     for row in data:
         print(row)
@@ -109,7 +82,7 @@ def  update_stock():
     column = input("Enter column where the value is to be changed: ")
     value1 = input("Enter productID of the entry to be updated: ")
     value2 = input("Enter updated value: ")
-    mycursor.execute("update Products set %s = %s where userID='%s'"%(column,value2,value1))
+    mycursor.execute("update Products set %s = %s where userID = %s"%(column,value2,value1))
     mycon.commit()
     print("Value successfully updated")
 
@@ -393,41 +366,6 @@ def gen_bill(bill_no, customer_name, customer_address, items):
     
     doc.build(elements)
     print(f"GST Invoice generated successfully: {filename}")
-
-# This part is Flask related : 
-
-'''
-app = Flask(__name__)
-app.secret_key = "328bh23jh5bh25h5j2j5jh21bj14jk1b5j"
-
-@app.route("/")
-def index():
-    # Render the home page
-    return render_template("index.html")
-
-@app.route("/add_order", methods=["GET", "POST"])
-def add_order():
-    # Handle adding a new order via web form
-    cursor = mycon.cursor(dictionary=True)
-    cursor.execute("SELECT Product_Name FROM PRODUCTS")
-    products = cursor.fetchall()
-    print(products)
-
-    if request.method == "POST":
-        order_id = int(request.form["orderId"])
-        customer_name = request.form["customerName"]
-        customer_address = request.form["customerAddress"]
-        product_name = request.form["productName"]
-        quantity = int(request.form["quantity"])
-        status = request.form["status"]
-        order_date = request.form["date"]
-        record_sale(customer_name, customer_address, product_name, quantity, order_date, status)
-        flash("✅ Order added successfully!", "success")
-        return redirect(url_for("add_order"))
-    
-    return render_template("add_stock.html", products=products)
-
-app.run(host="localhost", port = 81)'''
 
 # ---------- MAIN MENU ----------
 
