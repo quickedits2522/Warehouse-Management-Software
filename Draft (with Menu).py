@@ -15,8 +15,10 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 
 # Establish connection to MySQL database
 
-mycon = ms.connect(user = "root", passwd = "mysql", host = "localhost", database = "WMS", use_pure="True")
+mycon = ms.connect(user = "root", passwd = "mysql", host = "localhost", database = "WMS", use_pure=True)
 mycursor = mycon.cursor()
+
+#---------------User Management----------------
 
 def add_user():
     
@@ -24,34 +26,40 @@ def add_user():
     name = input("Enter username: ")
     dept = input("Enter department: ")
     sal = int(input("Enter salary: "))
-    mycursor.execute("insert into user (UserId, Name, Department, Salary) values(%s, %s, %s, %s)"%(userid, name, dept,sal))
+    
+    mycursor.execute("insert into user (UserId, Name, Department, Salary) values(%s, %s, %s, %s)",(userid, name, dept,sal))
     mycon.commit()
     print("Entry successfully added to the table")
 
 def remove_user():
     
     delete = input("Enter userID of the entry to be deleted: ")
-    mycursor.execute("delete from user where UserID = '%s'"%(delete))
+    mycursor.execute("delete from user where UserID = %s",(delete,))
     mycon.commit()
     print("Entry successfully deleted from the table")
 
 def search_user():
     
     user = input("Enter userID of the user to be found: ")
-    mycursor.execute("select * from user where UserID = '%s'"%(user,))
+    mycursor.execute("select * from user where UserID = %s",(user,))
     data = mycursor.fetchall()
-    for row in data:
-        print(row)
+    if not data:
+        print("NO RECORD FOUND")
+    else:
+        for row in data:
+            print(row)
 
 def update_user():
     
     column = input("Enter column where the value is to be changed: ")
     value1 = input("Enter userID of the entry to be updated: ")
     value2 = input("Enter updated value: ")
-    mycursor.execute("update user set %s = %s where UserID='%s'"%(column,value2,value1))
+    mycursor.execute(f"update user set {column} = %s where UserID=%s",(value2,value1))
     mycon.commit()
     print("Value successfully updated")
-    
+
+#-----------Stock Management---------------------------
+
 def add_stock():
     
     pdtid = input("Enter productID: ")
@@ -59,21 +67,22 @@ def add_stock():
     cost = int(input("Enter cost price of product: "))
     mrp = int(input("Enter MRP of product: "))
     qty = int(input("Enter quantity of product: "))
-    mycursor.execute("insert into Products values(%s, %s, %s, %s, %s)"%(pdtid, name, cost, mrp,qty))
+    
+    mycursor.execute("insert into Products values(%s, %s, %s, %s, %s)",(pdtid, name, cost, mrp,qty))
     mycon.commit()
     print("Record successfully added")
 
 def remove_stock():
     
     value = input("Enter the productID of the entry to be deleted: ")
-    mycursor.execute("delete from Products where ProductID = %s"%(value,))
+    mycursor.execute("delete from Products where ProductID = %s",(value,))
     mycon.commit()
     print("Entry successfully deleted from the table")
 
 def search_stock():
     
     product = input("Enter the productID of the entry to be dislayed: ")
-    mycursor.execute("Select * from Products where ProductID = %s"%(product,))
+    mycursor.execute("Select * from Products where ProductID = %s",(product,))
     data = mycursor.fetchall()
     for row in data:
         print(row)
@@ -83,7 +92,7 @@ def  update_stock():
     column = input("Enter column where the value is to be changed: ")
     value1 = input("Enter productID of the entry to be updated: ")
     value2 = input("Enter updated value: ")
-    mycursor.execute("update Products set %s = %s where userID = %s"%(column,value2,value1))
+    mycursor.execute(f"update Products set {column} = %s where ProductID = %s",(value2,value1))
     mycon.commit()
     print("Value successfully updated")
 
@@ -377,13 +386,13 @@ def main_menu():
     while True:
         
         print("""
-                        Main Menu:
-                        1. User Management
-                        2. Stock Management
-                        3. Sales Management
-                        4. Shipment Management
-                        5. Database Management
-                        6. Exit
+            Main Menu:
+            1. User Management
+            2. Stock Management
+            3. Sales Management
+            4. Shipment Management
+            5. Database Management
+            6. Exit
         """)
 
         choice = input("Enter your choice (1-6): ")
@@ -395,12 +404,12 @@ def main_menu():
             while True:
                 
                 print("""
-                            User Management:
-                            a. Add User
-                            b. Remove User
-                            c. Search User
-                            d. Update User Info
-                            e. Back to Main Menu
+                    User Management:
+                    a. Add User
+                    b. Remove User
+                    c. Search User
+                    d. Update User Info
+                    e. Back to Main Menu
                 """)
                 
                 ch = input("Enter your choice: ").lower()
@@ -434,12 +443,12 @@ def main_menu():
             while True:
                 
                 print("""
-                            Stock Management:
-                            a. Add Product
-                            b. Remove Product
-                            c. Search Product
-                            d. Update Product Info
-                            e. Back to Main Menu
+                    Stock Management:
+                    a. Add Product
+                    b. Remove Product
+                    c. Search Product
+                    d. Update Product Info
+                    e. Back to Main Menu
                 """)
                 
                 ch = input("Enter your choice: ").lower()
@@ -473,9 +482,9 @@ def main_menu():
             while True:
                 
                 print("""
-                            Sales Management:
-                            a. Record Sale
-                            b. Back to Main Menu
+                    Sales Management:
+                    a. Record Sale
+                    b. Back to Main Menu
                 """)
                 
                 ch = input("Enter your choice: ").lower()
@@ -507,10 +516,10 @@ def main_menu():
             while True:
                 
                 print("""
-                            Shipment Management:
-                            a. List of Shipments
-                            b. Search Shipment
-                            c. Back to Main Menu
+                    Shipment Management:
+                    a. List of Shipments
+                    b. Search Shipment
+                    c. Back to Main Menu
                 """)
                 
                 ch = input("Enter your choice: ").lower()
@@ -538,12 +547,12 @@ def main_menu():
             while True:
                 
                 print("""
-                            Database Management:
-                            a. Delete Entire Database
-                            b. Update Rows/Columns
-                            c. Select Custom Records
-                            d. Back to Main Menu
-                """)
+                    Database Management:
+                    a. Delete Entire Database
+                    b. Update Rows/Columns
+                    c. Select Custom Records
+                    d. Back to Main Menu
+                    """)
                 
                 ch = input("Enter your choice: ").lower()
 
@@ -576,5 +585,5 @@ def main_menu():
 # Run the main menu
 if __name__ == "__main__":
     #create_init_db()  # Ensure tables exist
-    #main_menu()
-    gen_bill(10000, "Sujan V", "13 bsq  qeeb w", "Iron Bars", 10)
+    main_menu()
+    #gen_bill(10000, "Sujan V", "13 bsq  qeeb w", "Iron Bars", 10)
