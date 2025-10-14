@@ -93,7 +93,7 @@ def create_init_db():
     
     init_tables=["CREATE TABLE IF NOT EXISTS USER(UserID int PRIMARY KEY, Name varchar(25), Department varchar(10), Salary int)",
                 "CREATE TABLE IF NOT EXISTS PRODUCTS(ProductID int PRIMARY KEY, Product_Name varchar(30), Cost_Price float, MRP float, Quantity int)",
-                "CREATE TABLE IF NOT EXISTS SALES(BillNo int PRIMARY KEY, Customer_Name varchar(25), Products varchar(255), QTY int, Sale_Amount float, Date_Of_Sale date)",
+                "CREATE TABLE IF NOT EXISTS SALES(BillNo int PRIMARY KEY AUTO_INCREMENT, Customer_Name varchar(25), Products varchar(255), QTY int, Sale_Amount float, Date_Of_Sale date)",
                 "CREATE TABLE IF NOT EXISTS TRANSPORT(ShipmentID int PRIMARY KEY, BillNo int, Address varchar(100), Status varchar(25), FOREIGN KEY (BillNo) REFERENCES SALES(BillNo) ON DELETE CASCADE)",
                 "CREATE TABLE IF NOT EXISTS PROFIT_AND_LOSS(BillNo int, ProductID int, Net_Profit float)",
                 "CREATE TABLE IF NOT EXISTS SETTINGS(CompanyName varchar(40), CompanyID int, GSTIN char(15), State varchar(25), UPI varchar(25), IGST float, CGST float, SGST float)"]
@@ -218,7 +218,7 @@ def set_settings(): # Should be used only once to set the company details
     mycon.commit()
     print("Settings Saved Successfully")
 
-def gen_bill(bill_no, customer_name, customer_address, items):
+def gen_bill(bill_no, customer_name, customer_address, product, qty):
     
     # Generate a GST invoice PDF for a sale
 
@@ -227,7 +227,7 @@ def gen_bill(bill_no, customer_name, customer_address, items):
     company_name = data[0][0]
     gstin = data[0][1]
     upi = data[0][2]
-    mycursor.execute("SELECT MRP FROM PRODUCTS WHERE Product_Name = %s",(items[0],))
+    mycursor.execute("SELECT MRP FROM PRODUCTS WHERE Product_Name = %s",(product,))
     mrp = mycursor.fetchall()[0][0]
     filename = f"GST_Invoice_{customer_name}_{bill_no}.pdf"
     logo_path = "logo.png"
@@ -257,7 +257,7 @@ def gen_bill(bill_no, customer_name, customer_address, items):
     elements.append(HRFlowable(width="100%", thickness=1, color=colors.grey))
     elements.append(Spacer(1, 10))
     elements.append(Paragraph(f"{company_name}", header_style))
-    elements.append(Paragraph("Phone: +91-9876543210 | Email: contact@abcstores.com", header_style))
+    elements.append(Paragraph("Phone: +91-9886601823 | Email: vibhaBala@gmail.com", header_style))
     elements.append(Paragraph(f"{gstin}", header_style))
     elements.append(Spacer(1, 12))
     elements.append(HRFlowable(width="100%", thickness=1, color=colors.grey))
@@ -295,12 +295,12 @@ def gen_bill(bill_no, customer_name, customer_address, items):
     # --- Item Rows ---
     
     subtotal = 0
-    total = int(items[1])*mrp
+    total = int(qty)*mrp
     subtotal += total
     data.append([
             Paragraph("1.", cell_style),
-            Paragraph(str(items[0]), cell_style),
-            Paragraph(str(items[1]), cell_style),
+            Paragraph(str(product), cell_style),
+            Paragraph(str(qty), cell_style),
             Paragraph(str(mrp), cell_style),
             Paragraph(str(total), cell_style)
     ])
@@ -475,33 +475,24 @@ def main_menu():
                 print("""
                             Sales Management:
                             a. Record Sale
-                            b. Generate GST Bill
-                            c. Back to Main Menu
+                            b. Back to Main Menu
                 """)
                 
                 ch = input("Enter your choice: ").lower()
 
                 if ch == 'a':
                     
-                    """custm_name = input("Enter Customer Name: ")
+                    custm_name = input("Enter Customer Name: ")
                     address = input("Enter Customer Address: ")
                     product = input("Enter Product Name: ")
                     qty = int(input("Enter Quantity: "))
                     today = date.today()
-                    status = input("Enter Shipment Status: ")"""
+                    status = input("Enter Shipment Status: ")
                     record_sale(custm_name, address, product, qty, today, status)
 
                 elif ch == 'b':
-                    """bill_no = input("Enter Bill Number: ")
-                    customer_name = input("Enter Customer Name: ")
-                    customer_address = input("Enter Customer Address: ")
-                    product = input("Enter Product Name: ")
-                    qty = int(input("Enter Quantity: "))
-                    items=(product, qty)"""
-                    gen_bill(bill_no, customer_name, customer_address, items)
-
-                elif ch == 'c':
                     break
+
                 else:
                     print("Invalid Choice. Please try again.")
 
@@ -542,16 +533,16 @@ def main_menu():
 
         elif choice == '5':
             
-            # --- DATABASE MANAGEMENT ---
+            # ---- DATABASE MANAGEMENT ---- 
             
             while True:
                 
                 print("""
-                                Database Management:
-                                a. Delete Entire Database
-                                b. Update Rows/Columns
-                                c. Select Custom Records
-                                d. Back to Main Menu
+                            Database Management:
+                            a. Delete Entire Database
+                            b. Update Rows/Columns
+                            c. Select Custom Records
+                            d. Back to Main Menu
                 """)
                 
                 ch = input("Enter your choice: ").lower()
@@ -584,5 +575,6 @@ def main_menu():
 
 # Run the main menu
 if __name__ == "__main__":
-    create_init_db()  # Ensure tables exist
-    main_menu()
+    #create_init_db()  # Ensure tables exist
+    #main_menu()
+    gen_bill(10000, "Sujan V", "13 bsq  qeeb w", "Iron Bars", 10)
