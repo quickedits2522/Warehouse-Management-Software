@@ -76,7 +76,7 @@ def update_user():
     except Exception as e:
         print(f"An error occurred: {e}")
 
-#-----------Stock Management---------------------------
+#--------------- Product Management ----------------
 
 def add_stock():
 
