@@ -13,20 +13,22 @@ import webbrowser
 
 # Establish connection to MySQL database
 
-mycon = ms.connect(user = "root", passwd = "mysql", host = "localhost", database = "WMS", use_pure=True)
+mycon = ms.connect(user = "root", passwd = "mysql", host = "localhost", use_pure=True)
 mycursor = mycon.cursor()
+mycursor.execute("CREATE DATABASE IF NOT EXISTS WMS")
+mycursor.execute("USE WMS")
 
 #--------------- User Management ----------------
 
 def add_user():
     
     try : 
-        userid = input("Enter userID: ")
-        name = input("Enter username: ")
-        dept = input("Enter department: ")
-        sal = int(input("Enter salary: "))
+        userid = input("Enter UserID: ")
+        name = input("Enter Username: ")
+        dept = input("Enter Department: ")
+        sal = int(input("Enter Salary: "))
     
-        mycursor.execute("insert into user (UserId, Name, Department, Salary) values(%s, %s, %s, %s)",(userid, name, dept,sal))
+        mycursor.execute(f"INSERT INTO USER (UserID, Name, Department, Salary) VALUES ({userid}, '{name}', '{dept}', {sal})")
         mycon.commit()
         print("Entry successfully added to the table")
 
@@ -40,8 +42,8 @@ def add_user():
 def remove_user():
     
     try :
-        delete = input("Enter userID of the entry to be deleted : ")
-        mycursor.execute("delete from user where UserID = %s",(delete,))
+        delete = input("Enter UserID of the entry to be deleted : ")
+        mycursor.execute(f"DELETE FROM USER WHERE UserID = {delete}")
         mycon.commit()
         print("Entry successfully deleted from the table")
         
@@ -51,13 +53,12 @@ def remove_user():
 def search_user():
     
     try : 
-        user = input("Enter userID of the user to be found: ")
-        mycursor.execute("select * from user where UserID = %s",(user,))
-        data = mycursor.fetchall()
-        if not data:
-            print("NO RECORD FOUND")
-        else:
-            table = from_db_cursor(mycursor)
+        user = input("Enter UserID of the user to be found: ")
+        mycursor.execute(f"select * from user where UserID = {user}")
+        table = from_db_cursor(mycursor)
+        if not table._rows :
+            print(f"No records found for UserID : {user}")
+        else :
             print(table)
 
     except Exception as e:
@@ -66,10 +67,10 @@ def search_user():
 def update_user():
     
     try :
-        column = input("Enter column where the value is to be changed: ")
-        value1 = input("Enter userID of the entry to be updated: ")
-        value2 = input("Enter updated value: ")
-        mycursor.execute(f"update user set {column} = %s where UserID=%s",(value2,value1))
+        column = input("Enter Column where the value is to be changed: ")
+        value1 = input("Enter UserID of the entry to be updated: ")
+        value2 = input("Enter Updated value: ")
+        mycursor.execute(f"UPDATE USER SET {column} = '{value2}' WHERE UserID = {value1}")
         mycon.commit()
         print("Value successfully updated")
 
@@ -81,13 +82,13 @@ def update_user():
 def add_stock():
 
     try : 
-        pdtid = input("Enter productID: ")
+        pdtid = input("Enter ProductID: ")
         name = input("Enter product name: ")
         cost = int(input("Enter cost price of product: "))
         mrp = int(input("Enter MRP of product: "))
         qty = int(input("Enter quantity of product: "))
     
-        mycursor.execute("insert into Products values(%s, %s, %s, %s, %s)",(pdtid, name, cost, mrp,qty))
+        mycursor.execute(f"INSERT INTO PRODUCTS (ProductID, Product_Name, Cost_Price, MRP, Quantity) VALUES ({pdtid}, '{name}', {cost}, {mrp}, {qty})")
         mycon.commit()
         print("Record successfully added")
 
@@ -103,7 +104,7 @@ def add_stock():
 def remove_stock():
     
     try :
-        value = input("Enter the productID of the entry to be deleted: ")
+        value = input("Enter the ProductID of the entry to be deleted: ")
         mycursor.execute("delete from Products where ProductID = %s",(value,))
         mycon.commit()
         print("Entry successfully deleted from the table")
@@ -114,10 +115,13 @@ def remove_stock():
 def search_stock():
     
     try:
-        product = input("Enter the productID of the entry to be dislayed: ")
-        mycursor.execute("Select * from Products where ProductID = %s",(product,))
+        product = input("Enter the ProductID of the entry to be dislayed: ")
+        mycursor.execute(f"SELECT * FROM Products WHERE ProductID = {product}")
         table = from_db_cursor(mycursor)
-        print(table)
+        if not table._rows :
+            print(f"No records found for ProductID: {product}")
+        else :
+            print(table)
 
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -125,10 +129,10 @@ def search_stock():
 def update_stock():
     
     try :
-        column = input("Enter column where the value is to be changed: ")
-        value1 = input("Enter productID of the entry to be updated: ")
+        column = input("Enter Column where the value is to be changed: ")
+        value1 = input("Enter ProductID of the entry to be updated: ")
         value2 = input("Enter updated value: ")
-        mycursor.execute(f"update Products set {column} = %s where ProductID = %s",(value2,value1))
+        mycursor.execute(f"update Products set {column} = {value2} where ProductID = {value1}")
         mycon.commit()
         print("Value successfully updated")
 
@@ -139,14 +143,12 @@ def create_init_db():
     
     # Create all required tables if they do not exist
     try : 
-        mycursor.execute("CREATE DATABASE IF NOT EXISTS WMS")
-        init_tables=["CREATE TABLE IF NOT EXISTS USER(UserID int PRIMARY KEY, Name varchar(50), Department varchar(30), Salary int)",
-                    "CREATE TABLE IF NOT EXISTS PRODUCTS(ProductID int PRIMARY KEY, Product_Name varchar(50), Cost_Price float, MRP float, Quantity int)",
+        init_tables=["CREATE TABLE IF NOT EXISTS USER(UserID int PRIMARY KEY AUTO_INCREMENT, Name varchar(50), Department varchar(30), Salary int)",
+                    "CREATE TABLE IF NOT EXISTS PRODUCTS(ProductID int PRIMARY KEY AUTO_INCREMENT, Product_Name varchar(50), Cost_Price float, MRP float, Quantity int)",
                     "CREATE TABLE IF NOT EXISTS SALES(BillNo int PRIMARY KEY AUTO_INCREMENT, Customer_Name varchar(50), Products varchar(300), QTY int, Sale_Amount float, Date_Of_Sale date)",
-                    "CREATE TABLE IF NOT EXISTS TRANSPORT(ShipmentID int PRIMARY KEY, BillNo int, Address varchar(300), Status varchar(30), FOREIGN KEY (BillNo) REFERENCES SALES(BillNo) ON DELETE CASCADE)",
+                    "CREATE TABLE IF NOT EXISTS TRANSPORT(ShipmentID int PRIMARY KEY AUTO_INCREMENT, BillNo int, Address varchar(300), Status varchar(30), FOREIGN KEY (BillNo) REFERENCES SALES(BillNo) ON DELETE CASCADE)",
                     "CREATE TABLE IF NOT EXISTS PROFIT_AND_LOSS(BillNo int, ProductID int, Net_Profit float)",
-                    "CREATE TABLE IF NOT EXISTS SETTINGS(CompanyName varchar(100), CompanyID int, GSTIN char(30), Company_Address varchar(300), State varchar(40), Mobile_No BIGINT, Email varchar(100), UPI varchar(40), IGST float, CGST float, SGST float)"]
-
+                    "CREATE TABLE IF NOT EXISTS SETTINGS(CompanyName varchar(255), CompanyID int, GSTIN char(30), Company_Address varchar(255), State varchar(255), Mobile_No BIGINT, Email varchar(255), UPI varchar(40), IGST float, CGST float, SGST float)"]
         for i in init_tables:
             mycursor.execute(i)
         mycon.commit()
@@ -163,10 +165,10 @@ def delete_db():
         print("WARNING! : This process is irreversible, All your data will be deleted permanently!!")
         usr_confirm = input("Do you want to continue (Y/N) : ")
         if usr_confirm in "Yy":
-            mycursor.execute("DROP TABLE IF EXISTS USER")
-            mycursor.execute("DROP TABLE IF EXISTS PRODUCTS")
-            mycursor.execute("DROP TABLE IF EXISTS SALES")
             mycursor.execute("DROP TABLE IF EXISTS TRANSPORT")
+            mycursor.execute("DROP TABLE IF EXISTS SALES")
+            mycursor.execute("DROP TABLE IF EXISTS PRODUCTS")
+            mycursor.execute("DROP TABLE IF EXISTS USER")
             print("Deleted all the tables")
 
         elif usr_confirm in "Nn" : 
@@ -183,7 +185,7 @@ def record_sale(custm_name, address, product, qty, today, status):
     # Record a sale, update inventory, generate bill, and record shipment
     
     try:
-        mycursor.execute("SELECT MRP, Quantity from PRODUCTS where Product_Name = %s",(product,))
+        mycursor.execute(f"SELECT MRP, Quantity FROM PRODUCTS WHERE Product_Name = '{product}'")
         output = mycursor.fetchall()
         mrp = output[0][0]
         qty_avl = output[0][1]
@@ -256,7 +258,7 @@ def search_ship(): # Search shipment by ShipmentID
     shipID = input("Enter the ShipmentID to be searched : ")
 
     try:
-        mycursor.execute("SELECT * from TRANSPORT where ShipmentID = %s", (shipID,))
+        mycursor.execute(f"SELECT * FROM TRANSPORT WHERE ShipmentID = {shipID}")
         print(f"Found Record for the ShipmentID : {shipID}")
         table = from_db_cursor(mycursor)
         print(table)
@@ -308,7 +310,7 @@ def set_settings():
     igst = float(input("Enter IGST Rate : "))
     cgst = sgst = float(input("Enter CGST/SGST Rate : "))
     upi = input("Enter UPI ID : ")
-    mycursor.execute("INSERT INTO SETTINGS VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",(Company_Name, Company_ID, GST_No, Company_Address, state, mobno, email, upi, igst, cgst, sgst))
+    mycursor.execute(f"INSERT INTO SETTINGS VALUES ('{Company_Name}', {Company_ID}, '{GST_No}', '{Company_Address}', '{state}', {mobno}, '{email}', '{upi}', {igst}, {cgst}, {sgst})")
     mycon.commit()
     print("Settings Saved Successfully")
 
@@ -326,7 +328,7 @@ def gen_bill(bill_no, customer_name, customer_address, product, qty):
         company_address = data[0][3]
 
         # --- Fetch Product Info ---
-        mycursor.execute("SELECT MRP FROM PRODUCTS WHERE Product_Name = %s", (product,))
+        mycursor.execute(f"SELECT MRP FROM PRODUCTS WHERE Product_Name = '{product}'")
         mrp = mycursor.fetchall()[0][0]
         filename = f"GST_Invoice_{customer_name}_{bill_no}.pdf"
         logo_path = "logo.png"
@@ -417,7 +419,7 @@ def gen_bill(bill_no, customer_name, customer_address, product, qty):
         # If product and qty are lists, handle multiple products
         if isinstance(product, list) and isinstance(qty, list):
             for idx, (prod, q) in enumerate(zip(product, qty), start=1):
-                mycursor.execute("SELECT MRP FROM PRODUCTS WHERE Product_Name = %s", (prod,))
+                mycursor.execute(f"SELECT MRP FROM PRODUCTS WHERE Product_Name = '{prod}'")
                 prod_mrp = mycursor.fetchall()[0][0]
                 total = int(q) * prod_mrp
                 subtotal += total
@@ -572,7 +574,6 @@ def print_divider():
     print("\n" + "="*60 + "\n")
 
 def main_menu():
-    checks()
     print("\n" + "="*60)
     print("      Welcome to Warehouse Management System (WMS)      ")
     print("="*60 + "\n")
@@ -765,12 +766,17 @@ def main_menu():
                 if ch == 'a':
                     delete_db()
                     print_divider()
+                    print("Exiting the program as the database has been deleted.")
+                    sys.exit(0)  # Exit after deleting the database to prevent further operations
+
                 elif ch == 'b':
                     manual_update()
                     print_divider()
+
                 elif ch == 'c':
                     manual_select()
                     print_divider()
+
                 elif ch == 'd':
                     break
                 else:
@@ -796,5 +802,5 @@ def main_menu():
 
 if __name__ == "__main__":
     create_init_db()
-    #checks()
+    checks()
     main_menu()
