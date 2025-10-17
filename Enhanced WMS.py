@@ -335,36 +335,6 @@ def search_ship(): # Search shipment by ShipmentID
     except:
         print(f"No records found for the ShipmentID : {shipID}")
 
-def manual_update(): # Manual Update of any table
-    
-    try :
-        table_name = input("Enter the name of the table to be updated : ")
-        column_name = input("Enter the column name to be updated : ")
-        value = input("Enter value to be updated : ")
-        row = input("Enter row identifier (Primary Key) : ")
-        row_value = int(input("Enter row identifier value (Primary Key Value) : "))
-        mycursor.execute(f"UPDATE {table_name} SET {column_name} = {value} WHERE {row} = {row_value}")
-        mycon.commit()
-        print("Successfully Updated the Record")
-    
-    except ValueError:
-        print("Invalid input. Please enter the correct data types.")
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-    
-def manual_select(): # Manual Select Details of any table
-    
-    try :
-        table_name = input("Enter the name of the table to be updated : ")
-        column_name = input("Enter the column name to be updated (Enter '*' to display all records) : ")
-        mycursor.execute(f"SELECT {column_name} FROM {table_name}")
-        table = from_db_cursor(mycursor)
-        print(table)
-    
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
 def set_settings(): 
 
     # Should be used only once to set the company details
@@ -948,10 +918,8 @@ def main_menu():
                 print("""
                 Database Management:
                 a. Delete Entire Database
-                b. Update Rows/Columns
-                c. Select Custom Records
-                d. Export Table to CSV
-                e. Back to Main Menu
+                b. Export Table to CSV
+                c. Back to Main Menu
                 """)
                 try : 
                     ch = input("Enter your choice: ").lower()
@@ -966,18 +934,10 @@ def main_menu():
                     sys.exit(0)  # Exit after deleting the database to prevent further operations
 
                 elif ch == 'b':
-                    manual_update()
-                    print_divider()
-
-                elif ch == 'c':
-                    manual_select()
-                    print_divider()
-
-                elif ch == 'd':
                     export_table_to_csv(input("Enter the table name to export: "))
                     print_divider()
 
-                elif ch == 'e':
+                elif ch == 'c':
                     break
 
                 else:
