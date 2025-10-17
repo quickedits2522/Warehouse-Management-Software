@@ -148,7 +148,7 @@ def create_init_db():
                     "CREATE TABLE IF NOT EXISTS PRODUCTS(ProductID int PRIMARY KEY AUTO_INCREMENT, Product_Name varchar(50), Cost_Price float, MRP float, Quantity int)",
                     "CREATE TABLE IF NOT EXISTS SALES(BillNo int PRIMARY KEY AUTO_INCREMENT, Customer_Name varchar(50), Products varchar(300), QTY int, Sale_Amount float, Date_Of_Sale date)",
                     "CREATE TABLE IF NOT EXISTS TRANSPORT(ShipmentID int PRIMARY KEY AUTO_INCREMENT, BillNo int, Address varchar(300), Status varchar(30), FOREIGN KEY (BillNo) REFERENCES SALES(BillNo) ON DELETE CASCADE)",
-                    "CREATE TABLE IF NOT EXISTS PROFIT_AND_LOSS(BillNo int, Product_Name varchar(50), Net_Profit float)",
+                    "CREATE TABLE IF NOT EXISTS PROFIT_AND_LOSS(BillNo int, Product_Name int, Net_Profit float)",
                     "CREATE TABLE IF NOT EXISTS SETTINGS(CompanyName varchar(255), CompanyID int, GSTIN char(30), Company_Address varchar(255), State varchar(255), Mobile_No BIGINT, Email varchar(255), UPI varchar(40), IGST float, CGST float, SGST float)"]
         for i in init_tables:
             mycursor.execute(i)
@@ -165,10 +165,11 @@ def delete_db():
     try : 
         print("WARNING! : This process is irreversible, All your data will be deleted permanently!!")
         usr_confirm = input("Do you want to continue (Y/N) : ")
-        tables = ["USER", "PRODUCTS", "TRANSPORT", "SALE", "PROFIT_ANA_LOSS", "SETTINGS"]
         if usr_confirm in "Yy":
-            for i in tables:
-                mycursor.execute(f"DROP TABLE IF EXISTS {i}")
+            mycursor.execute("DROP TABLE IF EXISTS TRANSPORT")
+            mycursor.execute("DROP TABLE IF EXISTS SALES")
+            mycursor.execute("DROP TABLE IF EXISTS PRODUCTS")
+            mycursor.execute("DROP TABLE IF EXISTS USER")
             print("Deleted all the tables")
 
         elif usr_confirm in "Nn" : 
@@ -409,7 +410,7 @@ def gen_bill(bill_no, customer_name, customer_address, product, qty):
         mycursor.execute(f"SELECT MRP FROM PRODUCTS WHERE Product_Name = '{product}'")
         mrp = mycursor.fetchall()[0][0]
         filename = f"GST_Invoice_{customer_name}_{bill_no}.pdf"
-        logo_path = r"C:\Users\logo.png"
+        logo_path = "logo.png"
 
         doc = SimpleDocTemplate(
             filename, pagesize=A4,
@@ -774,9 +775,6 @@ def main_menu():
                 elif ch == 'e':
                     user_info()
                     print_divider()
-                
-                elif ch == 'f':
-                    break
 
                 else:
                     print("Invalid Choice. Please try again.")
@@ -802,7 +800,7 @@ def main_menu():
                 d. Update Product Info
                 e. View All Products
                 f. Low Stock Alert
-                g. Back to Main Menu
+                e. Back to Main Menu
                 """)
                 try : 
                     ch = input("Enter your choice: ").lower()
@@ -887,9 +885,6 @@ def main_menu():
                 elif ch == 'd':
                     search_sale()
                     print_divider()
-
-                elif ch == 'e':
-                    break
 
                 else:
                     print("Invalid Choice. Please try again.")
