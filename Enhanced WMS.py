@@ -381,7 +381,7 @@ def gen_bill(bill_no, customer_name, customer_address, product, qty):
         mycursor.execute(f"SELECT MRP FROM PRODUCTS WHERE Product_Name = '{product}'")
         mrp = mycursor.fetchall()[0][0]
         filename = f"GST_Invoice_{customer_name}_{bill_no}.pdf"
-        logo_path = "logo.png"
+        logo_path = r"C:\Users\logo.png"
 
         doc = SimpleDocTemplate(
             filename, pagesize=A4,
@@ -747,6 +747,9 @@ def main_menu():
                     user_info()
                     print_divider()
 
+                elif ch == 'f':
+                    break
+
                 else:
                     print("Invalid Choice. Please try again.")
                     print_divider()
@@ -771,7 +774,7 @@ def main_menu():
                 d. Update Product Info
                 e. View All Products
                 f. Low Stock Alert
-                e. Back to Main Menu
+                g. Back to Main Menu
                 """)
                 try : 
                     ch = input("Enter your choice: ").lower()
@@ -856,6 +859,9 @@ def main_menu():
                 elif ch == 'd':
                     search_sale()
                     print_divider()
+                
+                elif ch == 'e':
+                    break
 
                 else:
                     print("Invalid Choice. Please try again.")
