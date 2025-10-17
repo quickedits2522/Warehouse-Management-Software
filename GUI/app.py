@@ -13,12 +13,12 @@ from datetime import datetime
 import qrcode
 import io
 import webbrowser
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, send_file, url_for, flash
 
 # Establish connection to MySQL database
 
 mycon = ms.connect(user = "root", passwd = "mysql", host = "localhost", use_pure=True)
-mycursor = mycon.cursor(dictionary=True)
+mycursor = mycon.cursor(dictionary=True, buffered=True)
 mycursor.execute("CREATE DATABASE IF NOT EXISTS WMS")
 mycursor.execute("USE WMS")
 LOG_FILE = "activity_log.txt"
@@ -156,7 +156,7 @@ def create_init_db():
                     "CREATE TABLE IF NOT EXISTS PRODUCTS(ProductID int PRIMARY KEY AUTO_INCREMENT, Product_Name varchar(50), Cost_Price float, MRP float, Quantity int)",
                     "CREATE TABLE IF NOT EXISTS SALES(BillNo int PRIMARY KEY AUTO_INCREMENT, Customer_Name varchar(50), Products varchar(300), QTY int, Sale_Amount float, Date_Of_Sale date)",
                     "CREATE TABLE IF NOT EXISTS TRANSPORT(ShipmentID int PRIMARY KEY AUTO_INCREMENT, BillNo int, Address varchar(300), Status varchar(30), FOREIGN KEY (BillNo) REFERENCES SALES(BillNo) ON DELETE CASCADE)",
-                    "CREATE TABLE IF NOT EXISTS PROFIT_AND_LOSS(BillNo int, Product_Name int, Net_Profit float)",
+                    "CREATE TABLE IF NOT EXISTS PROFIT_AND_LOSS(BillNo int, Product_Name varchar(50), Net_Profit float)",
                     "CREATE TABLE IF NOT EXISTS SETTINGS(CompanyName varchar(255), CompanyID int, GSTIN char(30), Company_Address varchar(255), State varchar(255), Mobile_No BIGINT, Email varchar(255), UPI varchar(40), IGST float, CGST float, SGST float)"]
         for i in init_tables:
             mycursor.execute(i)
@@ -390,12 +390,14 @@ def log_activity(message, level="INFO"):
 def export_table_to_csv(table_name):
     try:
         query = f"SELECT * FROM {table_name}"
-        df = pd.read_sql(query, mycon)
+        df = pd.read_sql(query, mycon)  # Make sure mycon is your MySQL connection
         filename = f"{table_name}_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         df.to_csv(filename, index=False)
         log_activity(f"Exported {table_name} data to {filename}")
+        return filename  # Return the file path so Flask can send it
     except Exception as e:
         log_activity(f"Error exporting data: {e}")
+        return None
         
 def gen_bill(bill_no, customer_name, customer_address, product, qty):
     
@@ -745,12 +747,75 @@ def settings():
     settings = mycursor.fetchall()[0]
     return render_template('settings.html',settings=settings, company_name=company_name)
 
-@app.route("/users")
+@app.route("/profit_loss")
 def users():
-    mycursor.execute("SELECT * FROM USER")
-    users = mycursor.fetchall()
-    return render_template("users.html", company_name=company_name, users=users)
+    mycursor.execute("SELECT * FROM PROFIT_AND_LOSS")
+    data = mycursor.fetchall()
+    total_net_profit = sum(row['Net_Profit'] for row in data)
+    total_bills = len(set(row['BillNo'] for row in data))
+    total_products = len(set(row['Product_Name'] for row in data))
+    return render_template(
+        'Profit_and_loss.html',
+        company_name=company_name,
+        profit_loss_data=data,
+        total_net_profit=total_net_profit,
+        total_bills=total_bills,
+        total_products=total_products
+    )
 
+@app.route('/export_profit_loss')
+def export_profit_loss():
+    # Export using your existing function
+    filename = export_table_to_csv("PROFIT_AND_LOSS")  # Returns the file path
+
+    # Send the file to the user
+    return send_file(filename, as_attachment=True)
+
+@app.route('/add_shipment', methods=['POST'])
+def add_shipment():
+    bill_no = request.form['bill_no']
+    product_name = request.form['product_name']
+    quantity = request.form['quantity']
+    status = request.form['status']
+
+    mycursor.execute("INSERT INTO SHIPMENTS (BillNo, Product_Name, Quantity, Status) VALUES (%s,%s,%s,%s)",
+                   (bill_no, product_name, quantity, status))
+    mycon.commit()
+    return redirect(url_for('shipments'))
+
+@app.route('/edit_shipment', methods=['POST'])
+def edit_shipment():
+    shipment_id = request.form['shipment_id']
+    bill_no = request.form['bill_no']
+    product_name = request.form['product_name']
+    quantity = request.form['quantity']
+    status = request.form['status']
+
+    mycursor.execute("""
+        UPDATE SHIPMENTS
+        SET BillNo=%s, Product_Name=%s, Quantity=%s, Status=%s
+        WHERE ShipmentID=%s
+    """, (bill_no, product_name, quantity, status, shipment_id))
+
+    mycon.commit()
+    return redirect(url_for('shipments'))
+
+@app.route('/delete_shipment/<int:id>')
+def delete_shipment(id):
+
+    mycursor.execute("DELETE FROM SHIPMENTS WHERE ShipmentID=%s", (id,))
+    mycon.commit()
+    return redirect(url_for('shipments'))
+
+@app.route('/export_shipments')
+def export_shipments():
+    # Use your existing export function
+    filename = export_table_to_csv("SHIPMENTS")  # Returns CSV file path
+    if filename:
+        return send_file(filename, as_attachment=True)
+    else:
+        return "Error exporting shipments", 500
+    
 @app.route("/users/add", methods=["GET","POST"])
 def add_user():
     if request.method == "POST":
@@ -762,6 +827,25 @@ def add_user():
         flash("User added successfully!")
         return redirect(url_for("users"))
     return render_template("add_user.html", company_name=company_name)
+
+@app.route('/shipments')
+def shipments():
+    mycursor.execute("SELECT * FROM TRANSPORT")
+    shipments_data = mycursor.fetchall()
+    
+    # Summary cards
+    total_shipments = len(shipments_data)
+    pending = len([s for s in shipments_data if s['Status'].lower() == 'pending'])
+    delivered = len([s for s in shipments_data if s['Status'].lower() == 'delivered'])
+    
+    return render_template(
+        'shipments.html',
+        company_name=company_name,
+        shipments_data=shipments_data,
+        total_shipments=total_shipments,
+        pending=pending,
+        delivered=delivered
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shipments Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+  body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0; padding: 0;
+    background: linear-gradient(135deg, #b6c7d6 0%, #95e0ea 100%);
+    min-height: 100vh;
+  }
+  header {
+    position: sticky; top:0; z-index:1000;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:20px 40px; background:#f0f4f8;
+    box-shadow:0 2px 10px rgba(0,0,0,0.1);
+  }
+  .header-left {display:flex; align-items:center;}
+  header img {height:50px; margin-right:15px; object-fit:contain;}
+  header h1 {font-size:1.8rem; color:#1e3a8a; margin:0;}
+  .header-right a {
+    text-decoration:none; color:white; background-color:#2563eb;
+    padding:10px 20px; border-radius:8px; font-weight:600; margin-left:10px;
+  }
+  main {padding:40px 50px;}
+  h2 {text-align:center; color:#1e3a8a; margin-bottom:30px;}
+  .cards-container {display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:25px; margin-bottom:30px;}
+  .card {background:rgba(203, 228, 233, 0.8); backdrop-filter:blur(10px); border-radius:15px; padding:20px; text-align:center; box-shadow:0 5px 15px rgba(0,0,0,0.1); cursor:default;}
+  .card .emoji {font-size:3rem; margin-bottom:8px;}
+  .card h3 {margin:10px 0 5px 0; color:#1e3a8a;}
+  .card .value {font-size:2rem; font-weight:600; color:#111827;}
+  .action-buttons {text-align:right; margin-bottom:15px;}
+  .action-buttons button {background-color:#2563eb; color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:600; cursor:pointer; margin-right:5px;}
+  .action-buttons button:hover {background-color:#1d4ed8;}
+  .search-box {margin-bottom:15px; text-align:left;}
+  .search-box input {padding:8px 12px; width:250px; border-radius:6px; border:1px solid #ccc;}
+  .table-container {overflow-x:auto; background:rgba(203, 228, 233, 0.8); backdrop-filter:blur(10px); border-radius:15px; padding:20px; box-shadow:0 5px 15px rgba(0,0,0,0.1);}
+  table {width:100%; border-collapse:collapse; min-width:600px;}
+  th, td {padding:12px 15px; text-align:center;}
+  th {background-color:#2563eb; color:white; font-weight:600; cursor:pointer; position:relative;}
+  th .arrow {font-size:0.8rem; margin-left:5px;}
+  th.sorted-asc .arrow::after {content:"▲";}
+  th.sorted-desc .arrow::after {content:"▼";}
+  tr:nth-child(even) {background-color:rgba(255,255,255,0.6);}
+  tr:hover {background-color:rgba(37,99,235,0.2);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="/static/logo.png" alt="Company Logo">
+    <h1>{{ company_name }}</h1>
+  </div>
+  <div class="header-right">
+    <a href="/add_order">➕ Add Order</a>
+    <a href="/dashboard">🏠 Dashboard</a>
+  </div>
+</header>
+
+<main>
+<h2>Shipments</h2>
+
+<!-- Summary Cards -->
+<div class="cards-container">
+  <div class="card">
+    <div class="emoji">🚚</div>
+    <h3>Total Shipments</h3>
+    <div class="value">{{ total_shipments }}</div>
+  </div>
+  <div class="card">
+    <div class="emoji">⏳</div>
+    <h3>Pending</h3>
+    <div class="value">{{ pending }}</div>
+  </div>
+  <div class="card">
+    <div class="emoji">✅</div>
+    <h3>Delivered</h3>
+    <div class="value">{{ delivered }}</div>
+  </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="action-buttons">
+  <button data-bs-toggle="modal" data-bs-target="#addModal">➕ Add Shipment</button>
+  <a href="/export_shipments"><button>📥 Export to CSV</button></a>
+</div>
+
+<!-- Search Box -->
+<div class="search-box">
+  <input type="text" id="searchInput" placeholder="Search by Bill or Product..." onkeyup="filterTable()">
+</div>
+
+<!-- Shipments Table -->
+<div class="table-container">
+  <table id="shipmentsTable">
+    <thead>
+      <tr>
+        <th onclick="sortTable(0,'num')">Shipment ID <span class="arrow">⬍</span></th>
+        <th onclick="sortTable(1,'num')">Bill No <span class="arrow">⬍</span></th>
+        <th onclick="sortTable(2,'str')">Product Name <span class="arrow">⬍</span></th>
+        <th onclick="sortTable(3,'num')">Quantity <span class="arrow">⬍</span></th>
+        <th onclick="sortTable(4,'str')">Status <span class="arrow">⬍</span></th>
+        <th onclick="sortTable(5,'str')">Shipped Date <span class="arrow">⬍</span></th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in shipments_data %}
+      <tr>
+        <td>{{ row.ShipmentID }}</td>
+        <td>{{ row.BillNo }}</td>
+        <td>{{ row.Product_Name }}</td>
+        <td>{{ row.Quantity }}</td>
+        <td>{{ row.Status }}</td>
+        <td>{{ row.Shipped_Date }}</td>
+        <td>
+          <button class="btn btn-sm btn-warning" onclick="editShipment('{{ row.ShipmentID }}')">✏️ Edit</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteShipment('{{ row.ShipmentID }}')">🗑️ Delete</button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Add Shipment Modal -->
+<div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="/add_shipment">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addModalLabel">Add Shipment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3"><label>Bill No</label><input type="number" name="bill_no" class="form-control" required></div>
+          <div class="mb-3"><label>Product Name</label><input type="text" name="product_name" class="form-control" required></div>
+          <div class="mb-3"><label>Quantity</label><input type="number" name="quantity" class="form-control" required></div>
+          <div class="mb-3"><label>Status</label>
+            <select name="status" class="form-control">
+              <option value="Pending">Pending</option>
+              <option value="Delivered">Delivered</option>
+            </select>
+          </div>
+          <div class="mb-3"><label>Shipped Date</label><input type="date" name="shipped_date" class="form-control" required></div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Add Shipment</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Shipment Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="/edit_shipment" id="editForm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editModalLabel">Edit Shipment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="shipment_id" id="editShipmentID">
+          <div class="mb-3"><label>Bill No</label><input type="number" name="bill_no" id="editBillNo" class="form-control" required></div>
+          <div class="mb-3"><label>Product Name</label><input type="text" name="product_name" id="editProductName" class="form-control" required></div>
+          <div class="mb-3"><label>Quantity</label><input type="number" name="quantity" id="editQuantity" class="form-control" required></div>
+          <div class="mb-3"><label>Status</label>
+            <select name="status" id="editStatus" class="form-control">
+              <option value="Pending">Pending</option>
+              <option value="Delivered">Delivered</option>
+            </select>
+          </div>
+          <div class="mb-3"><label>Shipped Date</label><input type="date" name="shipped_date" id="editShippedDate" class="form-control" required></div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-warning">Update Shipment</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Sortable table
+  let currentSortCol=-1; let currentSortDir='asc';
+  function sortTable(n,type){
+    const table=document.getElementById("shipmentsTable"); let rows,switching,i,x,y,shouldSwitch;
+    switching=true; Array.from(table.getElementsByTagName('th')).forEach(th=>th.classList.remove('sorted-asc','sorted-desc'));
+    currentSortDir=(currentSortCol===n)?(currentSortDir==='asc'?'desc':'asc'):'asc';
+    currentSortCol=n; table.getElementsByTagName('th')[n].classList.add(currentSortDir==='asc'?'sorted-asc':'sorted-desc');
+    while(switching){
+      switching=false; rows=table.rows;
+      for(i=1;i<(rows.length-1);i++){
+        shouldSwitch=false; x=rows[i].getElementsByTagName("TD")[n]; y=rows[i+1].getElementsByTagName("TD")[n];
+        let xContent=x.textContent||x.innerText; let yContent=y.textContent||y.innerText;
+        if(type==='num'){xContent=parseFloat(xContent); yContent=parseFloat(yContent);}
+        if(currentSortDir==="asc"){if(xContent>yContent){shouldSwitch=true; break;}} 
+        else {if(xContent<yContent){shouldSwitch=true; break;}}
+      }
+      if(shouldSwitch){rows[i].parentNode.insertBefore(rows[i+1],rows[i]); switching=true;}
+    }
+  }
+
+  // Search/filter table
+  function filterTable(){
+    const filter=document.getElementById("searchInput").value.toLowerCase();
+    const table=document.getElementById("shipmentsTable"); const tr=table.getElementsByTagName("tr");
+    for(let i=1;i<tr.length;i++){
+      let tdBill=tr[i].getElementsByTagName("td")[1]; let tdProduct=tr[i].getElementsByTagName("td")[2];
+      if(tdBill && tdProduct){
+        let txtBill=tdBill.textContent.toLowerCase(); let txtProd=tdProduct.textContent.toLowerCase();
+        tr[i].style.display=(txtBill.indexOf(filter)>-1 || txtProd.indexOf(filter)>-1)? "" : "none";
+      }
+    }
+  }
+
+  // Edit modal
+  function editShipment(id){
+    const row=Array.from(document.querySelectorAll("#shipmentsTable tbody tr")).find(tr=>tr.cells[0].innerText==id);
+    if(row){
+      document.getElementById("editShipmentID").value=row.cells[0].innerText;
+      document.getElementById("editBillNo").value=row.cells[1].innerText;
+      document.getElementById("editProductName").value=row.cells[2].innerText;
+      document.getElementById("editQuantity").value=row.cells[3].innerText;
+      document.getElementById("editStatus").value=row.cells[4].innerText;
+      document.getElementById("editShippedDate").value=row.cells[5].innerText;
+      new bootstrap.Modal(document.getElementById('editModal')).show();
+    }
+  }
+
+  // Delete shipment
+  function deleteShipment(id){
+    if(confirm("Are you sure you want to delete shipment ID: "+id+"?")){
+      window.location.href="/delete_shipment/"+id;
+    }
+  }
+</script>
+</body>
+</html>
