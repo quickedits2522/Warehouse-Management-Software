@@ -369,12 +369,14 @@ def gen_bill(bill_no, customer_name, customer_address, product, qty):
     
     try:
         # --- Fetch Company Info ---
-        mycursor.execute("SELECT CompanyName, GSTIN, UPI, Company_Address FROM SETTINGS")
+        mycursor.execute("SELECT CompanyName, GSTIN, UPI, Company_Address, Mobile_No, Email FROM SETTINGS")
         data = mycursor.fetchall()
         company_name = data[0][0]
         gstin = data[0][1]
         upi = data[0][2]
         company_address = data[0][3]
+        mobile_no = data[0][4]
+        email = data[0][5]
 
         # --- Fetch Product Info ---
         mycursor.execute(f"SELECT MRP FROM PRODUCTS WHERE Product_Name = '{product}'")
@@ -430,7 +432,7 @@ def gen_bill(bill_no, customer_name, customer_address, product, qty):
         elements.append(Spacer(1, 8))
         elements.append(Paragraph(f"GSTIN: <b>{gstin}</b>", header_style))
         elements.append(Paragraph(f"Address: {company_address}", header_style))
-        elements.append(Paragraph("Phone: +91-9886601823 | Email: vibhaBala@gmail.com", header_style))
+        elements.append(Paragraph(f"Phone: +91-{mobile_no} | Email: {email}", header_style))
         elements.append(Spacer(1, 10))
 
         # --- Invoice + Customer Info ---
