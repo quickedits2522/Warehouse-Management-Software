@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title or 'WMS' }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      background: linear-gradient(135deg, #cce7ff, #e0f7fa, #cce7ff);
+      min-height: 100vh;
+      display: flex;
+    }
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      background-color: #1e3a8a;
+      color: white;
+      padding-top: 20px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    .sidebar a {
+      color: white;
+      padding: 15px 20px;
+      text-decoration: none;
+      display: block;
+      transition: 0.3s;
+    }
+    .sidebar a:hover {
+      background-color: #2563eb;
+    }
+    /* Main Content */
+    .main-content {
+      flex-grow: 1;
+      padding: 20px 40px;
+    }
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+      color: #1e3a8a;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    header a {
+      text-decoration: none;
+      color: white;
+      background-color: #2563eb;
+      padding: 8px 15px;
+      border-radius: 6px;
+      transition: 0.3s;
+    }
+    header a:hover {
+      background-color: #1d4ed8;
+    }
+    /* Cards */
+    .cards {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+      flex: 1 1 200px;
+      min-width: 200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: transform 0.3s;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+    }
+    .card span {
+      font-size: 28px;
+      font-weight: bold;
+      color: #1e3a8a;
+    }
+    .card small {
+      color: #374151;
+    }
+    /* Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    th {
+      background-color: #1976D2;
+      color: white;
+    }
+    .btn {
+      text-decoration: none;
+      background-color: #2563eb;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: 0.3s;
+    }
+    .btn:hover { background-color: #1d4ed8; }
+    form input, form select {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0 15px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    form label { font-weight: 600; color: #1e3a8a; }
+    .flash { color: green; margin-bottom: 15px; }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <a href="{{ url_for('home') }}">🏠 Dashboard</a>
+    <a href="{{ url_for('users') }}">👤 User Management</a>
+    <a href="{{ url_for('home') }}">📦 Product Management</a>
+    <a href="{{ url_for('add_order') }}">🛒 Orders Management</a>
+    <a href="{{ url_for('settings') }}">⚙️ Settings</a>
+  </div>
+
+  <div class="main-content">
+    <header>
+      <h1>🏢 {{ company_name }}</h1>
+      <a href="{{ url_for('home') }}">← Back to Dashboard</a>
+    </header>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flash">
+          {% for message in messages %}
+            {{ message }}
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </div>
+
+</body>
+</html>

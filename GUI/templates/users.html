@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>👤 User Management</h2>
+<a href="{{ url_for('add_user') }}" class="btn">➕ Add User</a>
+<table>
+  <thead>
+    <tr><th>UserID</th><th>Name</th><th>Department</th><th>Salary</th><th>Action</th></tr>
+  </thead>
+  <tbody>
+    {% for user in users %}
+    <tr>
+      <td>{{ user.UserID }}</td>
+      <td>{{ user.Name }}</td>
+      <td>{{ user.Department }}</td>
+      <td>{{ user.Salary }}</td>
+      <td>
+        <a href="{{ url_for('add_order', user_id=user.UserID) }}" class="btn">🗑 Delete</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
