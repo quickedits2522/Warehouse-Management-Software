@@ -165,11 +165,10 @@ def delete_db():
     try : 
         print("WARNING! : This process is irreversible, All your data will be deleted permanently!!")
         usr_confirm = input("Do you want to continue (Y/N) : ")
+        tables = ["TRANSPORT", "SALES", "PRODUCTS", "USER", "PROFIT_AND_LOSS", "SETTINGS"]
         if usr_confirm in "Yy":
-            mycursor.execute("DROP TABLE IF EXISTS TRANSPORT")
-            mycursor.execute("DROP TABLE IF EXISTS SALES")
-            mycursor.execute("DROP TABLE IF EXISTS PRODUCTS")
-            mycursor.execute("DROP TABLE IF EXISTS USER")
+            for i in tables:
+                mycursor.execute(f"DROP TABLE IF EXISTS {i}")
             print("Deleted all the tables")
 
         elif usr_confirm in "Nn" : 
