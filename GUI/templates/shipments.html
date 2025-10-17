@@ -7,46 +7,58 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-  body {
+    body {
     font-family: 'Poppins', sans-serif;
     margin: 0; padding: 0;
     background: linear-gradient(135deg, #b6c7d6 0%, #95e0ea 100%);
     min-height: 100vh;
-  }
-  header {
+    }
+
+    header {
     position: sticky; top:0; z-index:1000;
     display:flex; justify-content:space-between; align-items:center;
     padding:20px 40px; background:#f0f4f8;
     box-shadow:0 2px 10px rgba(0,0,0,0.1);
-  }
-  .header-left {display:flex; align-items:center;}
-  header img {height:50px; margin-right:15px; object-fit:contain;}
-  header h1 {font-size:1.8rem; color:#1e3a8a; margin:0;}
-  .header-right a {
+    }
+
+    .header-left {display:flex; align-items:center;}
+    header img {height:50px; margin-right:15px; object-fit:contain;}
+    header h1 {
+      font-size: 1.8rem;
+      color: #1e3a8a;
+      margin: 0;
+    }
+    .header-right a {
     text-decoration:none; color:white; background-color:#2563eb;
     padding:10px 20px; border-radius:8px; font-weight:600; margin-left:10px;
-  }
-  main {padding:40px 50px;}
-  h2 {text-align:center; color:#1e3a8a; margin-bottom:30px;}
-  .cards-container {display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:25px; margin-bottom:30px;}
-  .card {background:rgba(203, 228, 233, 0.8); backdrop-filter:blur(10px); border-radius:15px; padding:20px; text-align:center; box-shadow:0 5px 15px rgba(0,0,0,0.1); cursor:default;}
-  .card .emoji {font-size:3rem; margin-bottom:8px;}
-  .card h3 {margin:10px 0 5px 0; color:#1e3a8a;}
-  .card .value {font-size:2rem; font-weight:600; color:#111827;}
-  .action-buttons {text-align:right; margin-bottom:15px;}
-  .action-buttons button {background-color:#2563eb; color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:600; cursor:pointer; margin-right:5px;}
-  .action-buttons button:hover {background-color:#1d4ed8;}
-  .search-box {margin-bottom:15px; text-align:left;}
-  .search-box input {padding:8px 12px; width:250px; border-radius:6px; border:1px solid #ccc;}
-  .table-container {overflow-x:auto; background:rgba(203, 228, 233, 0.8); backdrop-filter:blur(10px); border-radius:15px; padding:20px; box-shadow:0 5px 15px rgba(0,0,0,0.1);}
-  table {width:100%; border-collapse:collapse; min-width:600px;}
-  th, td {padding:12px 15px; text-align:center;}
-  th {background-color:#2563eb; color:white; font-weight:600; cursor:pointer; position:relative;}
-  th .arrow {font-size:0.8rem; margin-left:5px;}
-  th.sorted-asc .arrow::after {content:"▲";}
-  th.sorted-desc .arrow::after {content:"▼";}
-  tr:nth-child(even) {background-color:rgba(255,255,255,0.6);}
-  tr:hover {background-color:rgba(37,99,235,0.2);}
+    transition:0.3s;
+    }
+    main {padding:40px 50px;}
+    h2 {
+      text-align:center;
+      color:#1e3a8a; 
+      margin-bottom:30px;
+      margin-top: 30px;
+    }
+    .cards-container {display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:25px; margin-bottom:30px;}
+    .card {background:rgba(203, 228, 233, 0.8); backdrop-filter:blur(10px); border-radius:15px; padding:20px; text-align:center; box-shadow:0 5px 15px rgba(0,0,0,0.1); cursor:default;}
+    .card .emoji {font-size:3rem; margin-bottom:8px;}
+    .card h3 {margin:10px 0 5px 0; color:#1e3a8a;}
+    .card .value {font-size:2rem; font-weight:600; color:#111827;}
+    .action-buttons {text-align:right; margin-bottom:15px;}
+    .action-buttons button {background-color:#2563eb; color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:600; cursor:pointer; margin-right:5px;}
+    .action-buttons button:hover {background-color:#1d4ed8;}
+    .search-box {margin-bottom:15px; text-align:left;}
+    .search-box input {padding:8px 12px; width:250px; border-radius:6px; border:1px solid #ccc;}
+    .table-container {overflow-x:auto; background:rgba(203, 228, 233, 0.8); backdrop-filter:blur(10px); border-radius:15px; padding:20px; box-shadow:0 5px 15px rgba(0,0,0,0.1);}
+    table {width:100%; border-collapse:collapse; min-width:600px;}
+    th, td {padding:12px 15px; text-align:center;}
+    th {background-color:#2563eb; color:white; font-weight:600; cursor:pointer; position:relative;}
+    th .arrow {font-size:0.8rem; margin-left:5px;}
+    th.sorted-asc .arrow::after {content:"▲";}
+    th.sorted-desc .arrow::after {content:"▼";}
+    tr:nth-child(even) {background-color:rgba(255,255,255,0.6);}
+    tr:hover {background-color:rgba(37,99,235,0.2);}
 </style>
 </head>
 <body>
@@ -54,32 +66,32 @@
 <header>
   <div class="header-left">
     <img src="/static/logo.png" alt="Company Logo">
-    <h1>{{ company_name }}</h1>
+    <h1><b>{{ company_name }}</b></h1>
   </div>
   <div class="header-right">
     <a href="/add_order">➕ Add Order</a>
-    <a href="/dashboard">🏠 Dashboard</a>
+    <a href="/">🏠 Dashboard</a>
   </div>
 </header>
 
 <main>
-<h2>Shipments</h2>
+<h2><b>Shipments</b></h2>
 
 <!-- Summary Cards -->
 <div class="cards-container">
   <div class="card">
     <div class="emoji">🚚</div>
-    <h3>Total Shipments</h3>
+    <h3><b>Total Shipments</b></h3>
     <div class="value">{{ total_shipments }}</div>
   </div>
   <div class="card">
     <div class="emoji">⏳</div>
-    <h3>Pending</h3>
+    <h3><b>Pending</b></h3>
     <div class="value">{{ pending }}</div>
   </div>
   <div class="card">
     <div class="emoji">✅</div>
-    <h3>Delivered</h3>
+    <h3><b>Delivered</b></h3>
     <div class="value">{{ delivered }}</div>
   </div>
 </div>
@@ -102,10 +114,8 @@
       <tr>
         <th onclick="sortTable(0,'num')">Shipment ID <span class="arrow">⬍</span></th>
         <th onclick="sortTable(1,'num')">Bill No <span class="arrow">⬍</span></th>
-        <th onclick="sortTable(2,'str')">Product Name <span class="arrow">⬍</span></th>
-        <th onclick="sortTable(3,'num')">Quantity <span class="arrow">⬍</span></th>
+        <th onclick="sortTable(2,'str')">Address <span class="arrow">⬍</span></th>
         <th onclick="sortTable(4,'str')">Status <span class="arrow">⬍</span></th>
-        <th onclick="sortTable(5,'str')">Shipped Date <span class="arrow">⬍</span></th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -114,10 +124,8 @@
       <tr>
         <td>{{ row.ShipmentID }}</td>
         <td>{{ row.BillNo }}</td>
-        <td>{{ row.Product_Name }}</td>
-        <td>{{ row.Quantity }}</td>
+        <td>{{ row.Address }}</td>  
         <td>{{ row.Status }}</td>
-        <td>{{ row.Shipped_Date }}</td>
         <td>
           <button class="btn btn-sm btn-warning" onclick="editShipment('{{ row.ShipmentID }}')">✏️ Edit</button>
           <button class="btn btn-sm btn-danger" onclick="deleteShipment('{{ row.ShipmentID }}')">🗑️ Delete</button>
@@ -171,14 +179,12 @@
           <input type="hidden" name="shipment_id" id="editShipmentID">
           <div class="mb-3"><label>Bill No</label><input type="number" name="bill_no" id="editBillNo" class="form-control" required></div>
           <div class="mb-3"><label>Product Name</label><input type="text" name="product_name" id="editProductName" class="form-control" required></div>
-          <div class="mb-3"><label>Quantity</label><input type="number" name="quantity" id="editQuantity" class="form-control" required></div>
           <div class="mb-3"><label>Status</label>
             <select name="status" id="editStatus" class="form-control">
               <option value="Pending">Pending</option>
               <option value="Delivered">Delivered</option>
             </select>
           </div>
-          <div class="mb-3"><label>Shipped Date</label><input type="date" name="shipped_date" id="editShippedDate" class="form-control" required></div>
         </div>
         <div class="modal-footer">
           <button type="submit" class="btn btn-warning">Update Shipment</button>
@@ -232,8 +238,7 @@
     if(row){
       document.getElementById("editShipmentID").value=row.cells[0].innerText;
       document.getElementById("editBillNo").value=row.cells[1].innerText;
-      document.getElementById("editProductName").value=row.cells[2].innerText;
-      document.getElementById("editQuantity").value=row.cells[3].innerText;
+      document.getElementById("editAddress").value=row.cells[2].innerText;
       document.getElementById("editStatus").value=row.cells[4].innerText;
       document.getElementById("editShippedDate").value=row.cells[5].innerText;
       new bootstrap.Modal(document.getElementById('editModal')).show();

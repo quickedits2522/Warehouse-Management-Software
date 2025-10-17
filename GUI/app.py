@@ -792,7 +792,7 @@ def edit_shipment():
     status = request.form['status']
 
     mycursor.execute("""
-        UPDATE SHIPMENTS
+        UPDATE TRANSPORT
         SET BillNo=%s, Product_Name=%s, Quantity=%s, Status=%s
         WHERE ShipmentID=%s
     """, (bill_no, product_name, quantity, status, shipment_id))
@@ -803,14 +803,14 @@ def edit_shipment():
 @app.route('/delete_shipment/<int:id>')
 def delete_shipment(id):
 
-    mycursor.execute("DELETE FROM SHIPMENTS WHERE ShipmentID=%s", (id,))
+    mycursor.execute("DELETE FROM TRANSPORT WHERE ShipmentID=%s", (id,))
     mycon.commit()
     return redirect(url_for('shipments'))
 
 @app.route('/export_shipments')
 def export_shipments():
     # Use your existing export function
-    filename = export_table_to_csv("SHIPMENTS")  # Returns CSV file path
+    filename = export_table_to_csv("TRANSPORT")  # Returns CSV file path
     if filename:
         return send_file(filename, as_attachment=True)
     else:
@@ -832,7 +832,7 @@ def add_user():
 def shipments():
     mycursor.execute("SELECT * FROM TRANSPORT")
     shipments_data = mycursor.fetchall()
-    
+    print(shipments_data)
     # Summary cards
     total_shipments = len(shipments_data)
     pending = len([s for s in shipments_data if s['Status'].lower() == 'pending'])
@@ -846,6 +846,12 @@ def shipments():
         pending=pending,
         delivered=delivered
     )
+
+@app.route('/users')
+def users_webpage():
+    mycursor.execute("SELECT * FROM USER")
+    users_data = mycursor.fetchall()
+    return render_template('users.html', company_name=company_name, users_data=users_data)
 
 if __name__ == '__main__':
     app.run(debug=True)
