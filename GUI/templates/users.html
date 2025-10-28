@@ -70,17 +70,7 @@
   <div class="card">
     <div class="emoji">👤</div>
     <h3><b>Users</b></h3>
-    <div class="value"></div>
-  </div>
-  <div class="card">
-    <div class="emoji">⌚</div>
-    <h3><b>Past users</b></h3>
-    <div class="value"></div>
-  </div>
-  <div class="card">
-    <div class="emoji">✅</div>
-    <h3><b>Delivered</b></h3>
-    <div class="value"></div>
+    <div class="value">{{ count }}</div>
   </div>
 </div>
 
@@ -92,7 +82,7 @@
 
 <!-- Search Box -->
 <div class="search-box">
-  <input type="text" id="searchInput" placeholder="Search by Bill or Product..." onkeyup="filterTable()">
+  <input type="text" id="searchInput" placeholder="Search by UserID or Name..." onkeyup="filterTable()">
 </div>
 
 <!-- Users Table -->
@@ -134,9 +124,17 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <div class="mb-3"><label>Name</label><input type="text" name="name" class="form-control" required></div>
-          <div class="mb-3"><label>Department</label><input type="text" name="department" class="form-control" required></div>
-          <div class="mb-3"><label>Salary</label><input type="number" name="salary" class="form-control" required></div>
+          <div class="mb-3">
+            <label>Name</label>
+            <input type="text" name="name" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label>Department</label>
+            <input type="text" name="department" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label>Salary</label>
+            <input type="number" name="salary" class="form-control" required>
           </div>
         </div>
         <div class="modal-footer">
@@ -147,6 +145,7 @@
     </form>
   </div>
 </div>
+
 
 <!-- Edit User Modal -->
 <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
@@ -159,7 +158,7 @@
         </div>
         <div class="modal-body">
           <input type="hidden" name="user_id" id="editUserID">
-          <div class="mb-3"><label>Name</label><input type="text" name="userID" id="editName" class="form-control" required></div>
+          <div class="mb-3"><label>Name</label><input type="text" name="name" id="editName" class="form-control" required></div>
           <div class="mb-3"><label>Department</label><input type="text" name="department" id="editDepartment" class="form-control" required></div>
           <div class="mb-3"><label>Salary</label><input type="number" name="salary" id="editSalary" class="form-control" required>
           </div>
@@ -214,6 +213,7 @@
   function editUser(id){
     const row=Array.from(document.querySelectorAll("#shipmentsTable tbody tr")).find(tr=>tr.cells[0].innerText==id);
     if(row){
+      document.getElementById("editUserID").value=row.cells[0].innerText;
       document.getElementById("editName").value=row.cells[1].innerText;
       document.getElementById("editDepartment").value=row.cells[2].innerText;
       document.getElementById("editSalary").value=row.cells[3].innerText;

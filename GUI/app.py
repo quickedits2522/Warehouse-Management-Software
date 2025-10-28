@@ -13,7 +13,7 @@ from datetime import datetime
 import qrcode
 import io
 import webbrowser
-from flask import Flask, render_template, request, redirect, send_file, url_for, flash
+from flask import Flask, jsonify, render_template, request, redirect, send_file, url_for, flash
 
 # Establish connection to MySQL database
 
@@ -709,6 +709,7 @@ log.setLevel(logging.ERROR)
 
 @app.route('/')
 def home():
+    create_init_db()
     mycursor.execute("SELECT COUNT(*) FROM USER")
     no_of_users = mycursor.fetchone()['COUNT(*)']
     mycursor.execute("SELECT COUNT(*) FROM PRODUCTS")
@@ -717,7 +718,9 @@ def home():
     revenue = mycursor.fetchone()['SUM(Sale_Amount)'] or 0
     mycursor.execute("SELECT COUNT(*) FROM TRANSPORT")
     no_of_ships = mycursor.fetchone()['COUNT(*)']
-    return render_template('index.html', no_of_users=no_of_users, no_of_items=no_of_items, revenue=revenue, no_of_ships=no_of_ships, company_name=company_name)
+    mycursor.execute("show tables")
+    tables = mycursor.fetchall()
+    return render_template('index.html', no_of_users=no_of_users, no_of_items=no_of_items, revenue=revenue, no_of_ships=no_of_ships, company_name=company_name, no_of_tables=len(tables))
 
 @app.route('/add_order', methods=['GET', 'POST'])
 def add_order():
@@ -765,10 +768,7 @@ def users():
 
 @app.route('/export_profit_loss')
 def export_profit_loss():
-    # Export using your existing function
     filename = export_table_to_csv("PROFIT_AND_LOSS")  # Returns the file path
-
-    # Send the file to the user
     return send_file(filename, as_attachment=True)
 
 @app.route('/edit_shipment', methods=['POST'])
@@ -803,7 +803,7 @@ def export_shipments():
     else:
         return "Error exporting shipments", 500
     
-@app.route("/users/add", methods=["GET","POST"])
+@app.route("/add_user", methods=["POST"])
 def add_user():
     if request.method == "POST":
         name = request.form['name']
@@ -811,9 +811,8 @@ def add_user():
         sal = int(request.form['salary'])
         mycursor.execute("INSERT INTO USER (Name, Department, Salary) VALUES (%s, %s, %s)", (name, dept, sal))
         mycon.commit()
-        flash("User added successfully!")
+        log_activity(f"Added new user: Name : {name}, Department : {dept}, Salary : {sal}")
         return redirect(url_for("users"))
-    return render_template("add_user.html", company_name=company_name)
 
 @app.route('/shipments')
 def shipments():
@@ -833,18 +832,81 @@ def shipments():
         delivered=delivered
     )
 
+@app.route('/get_bill_details/<int:bill_no>')
+def get_bill_details(bill_no):
+    try:
+        # Fetch bill header info
+        mycursor.execute("SELECT * FROM bills WHERE BillNo = %s", (bill_no,))
+        bill = mycursor.fetchone()
+
+        # Fetch related product items (if any)
+        mycursor.execute("""
+            SELECT Product_Name, Quantity, Unit_Price, Total_Price
+            FROM bill_items
+            WHERE BillNo = %s
+        """, (bill_no,))
+        items = mycursor.fetchall()
+
+        if not bill:
+            return jsonify({"error": "Bill not found"}), 404
+
+        # Format result for modal display
+        details = {
+            "Bill No": bill["BillNo"],
+            "Customer Name": bill["Customer_Name"],
+            "Date": str(bill["Date"]),
+            "Total Amount": f"₹ {bill['Total_Amount']}",
+            "Net Profit": f"₹ {bill['Net_Profit']}",
+            "Products": items
+        }
+
+        return jsonify(details)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
 @app.route('/users')
 def users_webpage():
     mycursor.execute("SELECT * FROM USER")
     users_data = mycursor.fetchall()
-    return render_template('users.html', company_name=company_name, users_data=users_data)
+    count = len(users_data)
+    return render_template('users.html', company_name=company_name, users_data=users_data, count=count)
+
+@app.route('/edit_users', methods=['POST'])
+def edit_users():
+    user_id = request.form['user_id']
+    name = request.form['name']
+    department = request.form['department']
+    salary = request.form['salary']
+
+    mycursor.execute("""
+        UPDATE USER
+        SET Name=%s, Department=%s, Salary=%s
+        WHERE UserID=%s
+    """, (name, department, salary, user_id))
+
+    log_activity(f"Updated UserID : {user_id} with Name : {name}, Department : {department}, Salary : {salary}")
+    mycon.commit()
+    return redirect(url_for('users_webpage'))
+
+@app.route('/delete_user/<int:id>')
+def delete_user(id):
+    mycursor.execute("DELETE FROM USER WHERE UserID=%s", (id,))
+    mycon.commit()
+    return redirect(url_for('users_webpage'))
 
 @app.route('/dbm', methods=['GET', 'POST'])
 def dbms():
     mycursor.execute("show tables")
     tables = mycursor.fetchall()
-    print(tables)
     return render_template('dbms.html', db_data=tables, company_name=company_name, no_of_tables=len(tables))
+
+@app.route('/delete_table/<table_name>')
+def delete_table(table_name):
+    mycursor.execute(f"DROP TABLE IF EXISTS {table_name}")
+    mycon.commit()
+    log_activity(f"Deleted table: {table_name}")
+    return redirect(url_for('dbms'))
 
 if __name__ == '__main__':
     create_init_db()
