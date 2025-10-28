@@ -771,31 +771,18 @@ def export_profit_loss():
     # Send the file to the user
     return send_file(filename, as_attachment=True)
 
-@app.route('/add_shipment', methods=['POST'])
-def add_shipment():
-    bill_no = request.form['bill_no']
-    product_name = request.form['product_name']
-    quantity = request.form['quantity']
-    status = request.form['status']
-
-    mycursor.execute("INSERT INTO SHIPMENTS (BillNo, Product_Name, Quantity, Status) VALUES (%s,%s,%s,%s)",
-                   (bill_no, product_name, quantity, status))
-    mycon.commit()
-    return redirect(url_for('shipments'))
-
 @app.route('/edit_shipment', methods=['POST'])
 def edit_shipment():
     shipment_id = request.form['shipment_id']
     bill_no = request.form['bill_no']
-    product_name = request.form['product_name']
-    quantity = request.form['quantity']
+    address = request.form['address']
     status = request.form['status']
 
     mycursor.execute("""
         UPDATE TRANSPORT
-        SET BillNo=%s, Product_Name=%s, Quantity=%s, Status=%s
+        SET BillNo=%s, Address=%s, Status=%s
         WHERE ShipmentID=%s
-    """, (bill_no, product_name, quantity, status, shipment_id))
+    """, (bill_no, address, status, shipment_id))
 
     mycon.commit()
     return redirect(url_for('shipments'))
@@ -832,7 +819,6 @@ def add_user():
 def shipments():
     mycursor.execute("SELECT * FROM TRANSPORT")
     shipments_data = mycursor.fetchall()
-    print(shipments_data)
     # Summary cards
     total_shipments = len(shipments_data)
     pending = len([s for s in shipments_data if s['Status'].lower() == 'pending'])
@@ -853,5 +839,13 @@ def users_webpage():
     users_data = mycursor.fetchall()
     return render_template('users.html', company_name=company_name, users_data=users_data)
 
+@app.route('/dbm', methods=['GET', 'POST'])
+def dbms():
+    mycursor.execute("show tables")
+    tables = mycursor.fetchall()
+    print(tables)
+    return render_template('dbms.html', db_data=tables, company_name=company_name, no_of_tables=len(tables))
+
 if __name__ == '__main__':
+    create_init_db()
     app.run(debug=True)

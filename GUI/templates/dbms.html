@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profit & Loss Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #b6c7d6 0%, #95e0ea 100%);
+      min-height: 100vh;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 40px;
+      background: #f0f4f8;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+    }
+
+    header img {
+      height: 50px;
+      margin-right: 15px;
+      object-fit: contain;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      color: #1e3a8a;
+      margin: 0;
+    }
+
+    .header-right a {
+      text-decoration: none;
+      color: white;
+      background-color: #2563eb;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: 0.3s;
+      margin-left: 10px;
+    }
+
+    .header-right a:hover {
+      background-color: #1d4ed8;
+      transform: scale(1.05);
+    }
+
+    main {
+      padding: 40px 50px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #1e3a8a;
+      margin-bottom: 30px;
+    }
+
+    /* Summary Cards */
+    .cards-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 25px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: rgba(203, 228, 233, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: default;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+
+    .card .emoji {
+      font-size: 3rem;
+      margin-bottom: 8px;
+    }
+
+    .card h2 {
+      margin: 10px 0 5px 0;
+      color: #1e3a8a;
+    }
+
+    .card .value {
+      font-size: 2rem;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    /* Export button */
+    .export-btn {
+      text-align: right;
+      margin-bottom: 15px;
+    }
+    .export-btn button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .export-btn button:hover {
+      background-color: #1d4ed8;
+      transform: scale(1.05);
+    }
+
+    /* Search box */
+    .search-box {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+    .search-box input {
+      padding: 8px 12px;
+      width: 250px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+
+    /* Table */
+    .table-container {
+      overflow-x: auto;
+      background: rgba(203, 228, 233, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 500px;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    th, td {
+      padding: 12px 50px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #2563eb;
+      color: white;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      position: relative;
+      user-select: none;
+      width: 500000px;
+    }
+    .action-buttons {text-align:right; margin-bottom:15px;}
+    .action-buttons button {background-color:#2563eb; color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:600; cursor:pointer; margin-right:5px;}
+    .action-buttons button:hover {background-color:#1d4ed8;}
+
+    th .arrow {
+      font-size: 0.8rem;
+      margin-left: 5px;
+    }
+
+    th.sorted-asc .arrow::after {
+      content: "▲";
+    }
+
+    th.sorted-desc .arrow::after {
+      content: "▼";
+    }
+
+    tr:nth-child(even) {
+      background-color: rgba(255,255,255,0.6);
+    }
+    .action-buttons {
+      text-align:right; 
+      margin-bottom:15px;
+    }
+    .action-buttons button {
+      background-color:#2563eb; 
+      color:white; 
+      border:none; 
+      padding:10px 20px; 
+      border-radius:8px; 
+      font-weight:600; 
+      cursor:pointer; 
+      margin-right:5px;
+    }
+    .action-buttons button:hover {
+      background-color:#1d4ed8;
+    }
+
+    tr:hover {
+      background-color: rgba(37, 99, 235, 0.2);
+    }
+    
+    @media (max-width: 768px) {
+      main {
+        padding: 20px;
+      }
+      th, td {
+        padding: 10px 8px;
+      }
+      .search-box input {
+        width: 100%;
+      }
+    }
+      main {padding:40px 50px;}
+  h2 {text-align:center; color:#1e3a8a; margin-bottom:30px;}
+  .cards-container {display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:25px; margin-bottom:30px;}
+  .card {background:rgba(203, 228, 233, 0.8); backdrop-filter:blur(10px); border-radius:15px; padding:20px; text-align:center; box-shadow:0 5px 15px rgba(0,0,0,0.1); cursor:default;}
+  .card .emoji {font-size:3rem; margin-bottom:8px;}
+  .card h3 {margin:10px 0 5px 0; color:#1e3a8a;}
+  .card .value {font-size:2rem; font-weight:600; color:#111827;}
+  .action-buttons {text-align:right; margin-bottom:15px;}
+  .action-buttons button {background-color:#2563eb; color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:600; cursor:pointer; margin-right:5px;}
+  .action-buttons button:hover {background-color:#1d4ed8;}
+  .search-box {margin-bottom:15px; text-align:left;}
+  .search-box input {padding:8px 12px; width:250px; border-radius:6px; border:1px solid #ccc;}
+  .table-container {overflow-x:auto; background:rgba(203, 228, 233, 0.8); backdrop-filter:blur(10px); border-radius:15px; padding:20px; box-shadow:0 5px 15px rgba(0,0,0,0.1);}
+  table {width:100%; border-collapse:collapse; min-width:600px;}
+  th, td {padding:12px 15px; text-align:center;}
+  th {background-color:#2563eb; color:white; font-weight:600; cursor:pointer; position:relative;}
+  th .arrow {font-size:0.8rem; margin-left:5px;}
+  th.sorted-asc .arrow::after {content:"▲";}
+  th.sorted-desc .arrow::after {content:"▼";}
+  tr:nth-child(even) {background-color:rgba(255,255,255,0.6);}
+  tr:hover {background-color:rgba(37,99,235,0.2);}
+    
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="header-left">
+      <img src="/static/logo.png" alt="Company Logo">
+      <h1>{{ company_name }}</h1>
+    </div>
+    <div class="header-right">
+      <a href="/add_database">➕ Add Database</a>
+      <a href="/">🏠 Dashboard</a>
+    </div>
+  </header>
+
+  <main>
+    <h1>Database Management</h1>
+
+    <!-- Summary Cards -->
+    <div class="cards-container">
+      <div class="card">
+        <div class="emoji">💰</div>
+        <h2>No of Databases</h2>
+        <div class="value">{{ no_of_tables }}</div>
+      </div>
+    </div>
+
+    <!-- Export Button -->
+    <div class="export-btn">
+      <a href="/export_profit_loss">
+        <button>📥 Export to CSV</button>
+      </a>
+    </div>
+
+    <!-- Search Box -->
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search by Bill or Product..." onkeyup="filterTable()">
+    </div>
+
+    <!-- Sortable Table -->
+    <div class="table-container">
+      <table id="profitLossTable">
+        <thead>
+          <tr>
+            <th onclick="sortTable(0, 'num')">Database Name <span class="arrow">⬍</span></th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in db_data %}
+          <tr>
+            <td>{{ row.Tables_in_wms }}</td>
+            <td>
+                <button class="btn btn-sm btn-warning" onclick="editUser('{{ row.UserID }}')">✏️ Edit</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteUser('{{ row.UserID }}')">🗑️ Delete</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- Edit User Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="/edit_users" id="editForm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editModalLabel">Edit User</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="user_id" id="editUserID">
+          <div class="mb-3"><label>Name</label><input type="text" name="userID" id="editName" class="form-control" required></div>
+          <div class="mb-3"><label>Department</label><input type="text" name="department" id="editDepartment" class="form-control" required></div>
+          <div class="mb-3"><label>Salary</label><input type="number" name="salary" id="editSalary" class="form-control" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-warning">Update User</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Sortable table
+  let currentSortCol=-1; let currentSortDir='asc';
+  function sortTable(n,type){
+    const table=document.getElementById("shipmentsTable"); let rows,switching,i,x,y,shouldSwitch;
+    switching=true; Array.from(table.getElementsByTagName('th')).forEach(th=>th.classList.remove('sorted-asc','sorted-desc'));
+    currentSortDir=(currentSortCol===n)?(currentSortDir==='asc'?'desc':'asc'):'asc';
+    currentSortCol=n; table.getElementsByTagName('th')[n].classList.add(currentSortDir==='asc'?'sorted-asc':'sorted-desc');
+    while(switching){
+      switching=false; rows=table.rows;
+      for(i=1;i<(rows.length-1);i++){
+        shouldSwitch=false; x=rows[i].getElementsByTagName("TD")[n]; y=rows[i+1].getElementsByTagName("TD")[n];
+        let xContent=x.textContent||x.innerText; let yContent=y.textContent||y.innerText;
+        if(type==='num'){xContent=parseFloat(xContent); yContent=parseFloat(yContent);}
+        if(currentSortDir==="asc"){if(xContent>yContent){shouldSwitch=true; break;}} 
+        else {if(xContent<yContent){shouldSwitch=true; break;}}
+      }
+      if(shouldSwitch){rows[i].parentNode.insertBefore(rows[i+1],rows[i]); switching=true;}
+    }
+  }
+
+  // Search/filter table
+  function filterTable(){
+    const filter=document.getElementById("searchInput").value.toLowerCase();
+    const table=document.getElementById("shipmentsTable"); const tr=table.getElementsByTagName("tr");
+    for(let i=1;i<tr.length;i++){
+      let tdBill=tr[i].getElementsByTagName("td")[1]; let tdProduct=tr[i].getElementsByTagName("td")[2];
+      if(tdBill && tdProduct){
+        let txtBill=tdBill.textContent.toLowerCase(); let txtProd=tdProduct.textContent.toLowerCase();
+        tr[i].style.display=(txtBill.indexOf(filter)>-1 || txtProd.indexOf(filter)>-1)? "" : "none";
+      }
+    }
+  }
+
+  // Edit modal
+  function editUser(id){
+    const row=Array.from(document.querySelectorAll("#shipmentsTable tbody tr")).find(tr=>tr.cells[0].innerText==id);
+    if(row){
+      document.getElementById("editName").value=row.cells[1].innerText;
+      document.getElementById("editDepartment").value=row.cells[2].innerText;
+      document.getElementById("editSalary").value=row.cells[3].innerText;
+      new bootstrap.Modal(document.getElementById('editModal')).show();
+    }
+  }
+
+  // Delete User
+  function deleteUser(id){
+    if(confirm("Are you sure you want to delete user ID: "+id+"?")){
+      window.location.href="/delete_user/"+id;
+    }
+  }
+  </script>
+
+</body>
+</html>

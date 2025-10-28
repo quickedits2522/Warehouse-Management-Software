@@ -113,7 +113,7 @@
         <td>{{ row.UserID }}</td>
         <td>{{ row.Name }}</td>
         <td>{{ row.Department }}</td>
-        <td>₹{{ row.Salary }}</td>
+        <td>{{ row.Salary }}</td>
         <td>
           <button class="btn btn-sm btn-warning" onclick="editUser('{{ row.UserID }}')">✏️ Edit</button>
           <button class="btn btn-sm btn-danger" onclick="deleteUser('{{ row.UserID }}')">🗑️ Delete</button>
@@ -124,7 +124,7 @@
   </table>
 </div>
 
-<!-- Add Shipment Modal -->
+<!-- Add User Modal -->
 <div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <form method="POST" action="/add_user">
@@ -134,10 +134,9 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <div class="mb-3"><label>UserID</label><input type="text" name="UserID" class="form-control" required></div>
-          <div class="mb-3"><label>Name</label><input type="text" name="User_name" class="form-control" required></div>
-          <div class="mb-3"><label>Department</label><input type="text" name="Department" class="form-control" required></div>
-          <div class="mb-3"><label>Salary</label><input type="number" name="Salary" class="form-control" required></div>
+          <div class="mb-3"><label>Name</label><input type="text" name="name" class="form-control" required></div>
+          <div class="mb-3"><label>Department</label><input type="text" name="department" class="form-control" required></div>
+          <div class="mb-3"><label>Salary</label><input type="number" name="salary" class="form-control" required></div>
           </div>
         </div>
         <div class="modal-footer">
@@ -149,30 +148,24 @@
   </div>
 </div>
 
-<!-- Edit Shipment Modal -->
+<!-- Edit User Modal -->
 <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <form method="POST" action="/edit_users" id="editForm">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="editModalLabel">Edit Shipment</h5>
+          <h5 class="modal-title" id="editModalLabel">Edit User</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <input type="hidden" name="user_id" id="editUserID">
-          <div class="mb-3"><label>UserID</label><input type="text" name="bill_no" id="editBillNo" class="form-control" required></div>
-          <div class="mb-3"><label>User Name</label><input type="text" name="product_name" id="editProductName" class="form-control" required></div>
-          <div class="mb-3"><label>Department</label><input type="number" name="quantity" id="editQuantity" class="form-control" required></div>
-          <div class="mb-3"><label>Salary</label>
-            <select name="status" id="editStatus" class="form-control">
-              <option value="Pending">Pending</option>
-              <option value="Delivered">Delivered</option>
-            </select>
+          <div class="mb-3"><label>Name</label><input type="text" name="userID" id="editName" class="form-control" required></div>
+          <div class="mb-3"><label>Department</label><input type="text" name="department" id="editDepartment" class="form-control" required></div>
+          <div class="mb-3"><label>Salary</label><input type="number" name="salary" id="editSalary" class="form-control" required>
           </div>
-          <div class="mb-3"><label>Shipped Date</label><input type="date" name="shipped_date" id="editShippedDate" class="form-control" required></div>
         </div>
         <div class="modal-footer">
-          <button type="submit" class="btn btn-warning">Update Shipment</button>
+          <button type="submit" class="btn btn-warning">Update User</button>
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
         </div>
       </div>
@@ -218,23 +211,20 @@
   }
 
   // Edit modal
-  function editShipment(id){
+  function editUser(id){
     const row=Array.from(document.querySelectorAll("#shipmentsTable tbody tr")).find(tr=>tr.cells[0].innerText==id);
     if(row){
-      document.getElementById("editShipmentID").value=row.cells[0].innerText;
-      document.getElementById("editBillNo").value=row.cells[1].innerText;
-      document.getElementById("editProductName").value=row.cells[2].innerText;
-      document.getElementById("editQuantity").value=row.cells[3].innerText;
-      document.getElementById("editStatus").value=row.cells[4].innerText;
-      document.getElementById("editShippedDate").value=row.cells[5].innerText;
+      document.getElementById("editName").value=row.cells[1].innerText;
+      document.getElementById("editDepartment").value=row.cells[2].innerText;
+      document.getElementById("editSalary").value=row.cells[3].innerText;
       new bootstrap.Modal(document.getElementById('editModal')).show();
     }
   }
 
-  // Delete shipment
-  function deleteShipment(id){
-    if(confirm("Are you sure you want to delete shipment ID: "+id+"?")){
-      window.location.href="/delete_shipment/"+id;
+  // Delete User
+  function deleteUser(id){
+    if(confirm("Are you sure you want to delete user ID: "+id+"?")){
+      window.location.href="/delete_user/"+id;
     }
   }
 </script>

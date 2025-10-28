@@ -98,7 +98,6 @@
 
 <!-- Action Buttons -->
 <div class="action-buttons">
-  <button data-bs-toggle="modal" data-bs-target="#addModal">➕ Add Shipment</button>
   <a href="/export_shipments"><button>📥 Export to CSV</button></a>
 </div>
 
@@ -136,36 +135,6 @@
   </table>
 </div>
 
-<!-- Add Shipment Modal -->
-<div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <form method="POST" action="/add_shipment">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="addModalLabel">Add Shipment</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-3"><label>Bill No</label><input type="number" name="bill_no" class="form-control" required></div>
-          <div class="mb-3"><label>Product Name</label><input type="text" name="product_name" class="form-control" required></div>
-          <div class="mb-3"><label>Quantity</label><input type="number" name="quantity" class="form-control" required></div>
-          <div class="mb-3"><label>Status</label>
-            <select name="status" class="form-control">
-              <option value="Pending">Pending</option>
-              <option value="Delivered">Delivered</option>
-            </select>
-          </div>
-          <div class="mb-3"><label>Shipped Date</label><input type="date" name="shipped_date" class="form-control" required></div>
-        </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Add Shipment</button>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        </div>
-      </div>
-    </form>
-  </div>
-</div>
-
 <!-- Edit Shipment Modal -->
 <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -178,7 +147,7 @@
         <div class="modal-body">
           <input type="hidden" name="shipment_id" id="editShipmentID">
           <div class="mb-3"><label>Bill No</label><input type="number" name="bill_no" id="editBillNo" class="form-control" required></div>
-          <div class="mb-3"><label>Product Name</label><input type="text" name="product_name" id="editProductName" class="form-control" required></div>
+          <div class="mb-3"><label>Address</label><input type="text" name="address" id="editAddress" class="form-control" required></div>
           <div class="mb-3"><label>Status</label>
             <select name="status" id="editStatus" class="form-control">
               <option value="Pending">Pending</option>
@@ -239,8 +208,7 @@
       document.getElementById("editShipmentID").value=row.cells[0].innerText;
       document.getElementById("editBillNo").value=row.cells[1].innerText;
       document.getElementById("editAddress").value=row.cells[2].innerText;
-      document.getElementById("editStatus").value=row.cells[4].innerText;
-      document.getElementById("editShippedDate").value=row.cells[5].innerText;
+      document.getElementById("editStatus").value=row.cells[3].innerText;
       new bootstrap.Modal(document.getElementById('editModal')).show();
     }
   }
