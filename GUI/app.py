@@ -1002,6 +1002,7 @@ def delete_user(id):
     return redirect(url_for('users_webpage'))
 
 @app.route('/dbm', methods=['GET', 'POST'])
+@role_required('Admin')
 def dbms():
     mycursor.execute("show tables")
     tables = mycursor.fetchall()
