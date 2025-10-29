@@ -814,9 +814,10 @@ def home():
     no_of_ships = mycursor.fetchone()['COUNT(*)']
     mycursor.execute("show tables")
     tables = mycursor.fetchall()
-    return render_template('index.html', no_of_users=no_of_users, no_of_items=no_of_items, revenue=revenue, no_of_ships=no_of_ships, company_name=company_name, no_of_tables=len(tables))
+    return render_template('index.html', no_of_users=no_of_users, no_of_items=no_of_items, revenue=revenue, no_of_ships=no_of_ships, company_name=company_name, no_of_tables=len(tables), username=session.get('username'), role=session.get('role'))
 
 @app.route('/add_order', methods=['GET', 'POST'])
+@role_required('Admin', 'Sales', 'Manager')
 def add_order():
     today = date.today().strftime("%Y-%m-%d")
     mycursor.execute("SELECT Product_Name FROM PRODUCTS")
