@@ -5,3 +5,7 @@
 [2025-10-29 14:35:24] [INFO] Initialized USER, PRODUCTS, SALES, TRANSPORT, PROFIT_AND_LOSS, SETTINGS and LOGIN tables in the database
 [2025-10-29 14:35:24] [INFO] Initialized USER, PRODUCTS, SALES, TRANSPORT, PROFIT_AND_LOSS, SETTINGS and LOGIN tables in the database
 [2025-10-29 14:35:46] [INFO] Initialized USER, PRODUCTS, SALES, TRANSPORT, PROFIT_AND_LOSS, SETTINGS and LOGIN tables in the database
+[2025-10-29 14:35:59] [INFO] Initialized USER, PRODUCTS, SALES, TRANSPORT, PROFIT_AND_LOSS, SETTINGS and LOGIN tables in the database
+[2025-10-29 14:36:00] [INFO] Initialized USER, PRODUCTS, SALES, TRANSPORT, PROFIT_AND_LOSS, SETTINGS and LOGIN tables in the database
+[2025-10-29 14:36:00] [INFO] User admin logged in successfully with role Admin
+[2025-10-29 14:36:00] [INFO] Initialized USER, PRODUCTS, SALES, TRANSPORT, PROFIT_AND_LOSS, SETTINGS and LOGIN tables in the database
