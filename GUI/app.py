@@ -13,7 +13,9 @@ from datetime import datetime
 import qrcode
 import io
 import webbrowser
-from flask import Flask, jsonify, render_template, request, redirect, send_file, url_for, flash
+from flask import Flask, jsonify, render_template, request, redirect, send_file, url_for, flash, session
+from functools import wraps
+import hashlib
 
 # Establish connection to MySQL database
 
