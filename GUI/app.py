@@ -887,6 +887,7 @@ def edit_shipment():
     return redirect(url_for('shipments'))
 
 @app.route('/delete_shipment/<int:id>')
+@role_required('Admin', 'Manager')
 def delete_shipment(id):
 
     mycursor.execute("DELETE FROM TRANSPORT WHERE ShipmentID=%s", (id,))
