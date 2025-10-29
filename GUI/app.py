@@ -895,6 +895,7 @@ def delete_shipment(id):
     return redirect(url_for('shipments'))
 
 @app.route('/export_shipments')
+@role_required('Admin', 'Shipping', 'Manager')
 def export_shipments():
     # Use your existing export function
     filename = export_table_to_csv("TRANSPORT")  # Returns CSV file path
