@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 style="color: #1e3a8a; margin-bottom: 20px;">📦 Product Inventory</h2>
+
+<div class="cards" style="margin-bottom: 30px;">
+  <div class="card">
+    <span>{{ total_products }}</span>
+    <small>Total Products</small>
+  </div>
+  <div class="card">
+    <span>{{ total_stock }}</span>
+    <small>Total Stock Units</small>
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Product ID</th>
+      <th>Product Name</th>
+      <th>Cost Price</th>
+      <th>MRP</th>
+      <th>Quantity</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for product in products_data %}
+    <tr>
+      <td>{{ product.ProductID }}</td>
+      <td>{{ product.Product_Name }}</td>
+      <td>₹{{ product.Cost_Price }}</td>
+      <td>₹{{ product.MRP }}</td>
+      <td>{{ product.Quantity }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
