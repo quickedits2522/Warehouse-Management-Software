@@ -905,6 +905,7 @@ def export_shipments():
         return "Error exporting shipments", 500
     
 @app.route("/add_user", methods=["POST"])
+@role_required('Admin', 'Manager')
 def add_user():
     if request.method == "POST":
         name = request.form['name']
