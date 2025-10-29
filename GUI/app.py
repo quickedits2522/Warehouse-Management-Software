@@ -839,6 +839,15 @@ def add_order():
 
     return render_template('add_order.html', products=products, success=success, company_name=company_name, company_logo="/static/logo.png", today=today)
 
+@app.route('/inventory')
+@role_required('Admin', 'Manager', 'Sales')
+def inventory():
+    mycursor.execute("SELECT * FROM PRODUCTS")
+    products_data = mycursor.fetchall()
+    total_products = len(products_data)
+    total_stock = sum(p['Quantity'] for p in products_data)
+    return render_template('inventory.html', company_name=company_name, products_data=products_data, total_products=total_products, total_stock=total_stock)
+
 @app.route('/settings', methods=['GET', 'POST'])
 @role_required('Admin', 'Manager')
 def settings():
