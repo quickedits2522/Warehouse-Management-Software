@@ -710,6 +710,43 @@ def checks():
         log_activity("No products found in the inventory. Please add products to proceed.\n")
         add_stock()
 
+# ---------- AUTHENTICATION FUNCTIONS ----------
+
+def hash_password(password):
+    """Hash a password using SHA256"""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def verify_password(password, hashed_password):
+    """Verify a password against its hash"""
+    return hash_password(password) == hashed_password
+
+def login_required(f):
+    """Decorator to require login for routes"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('Please log in to access this page.')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def role_required(*roles):
+    """Decorator to require specific roles for routes"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'user_id' not in session:
+                flash('Please log in to access this page.')
+                return redirect(url_for('login'))
+            
+            if session.get('role') not in roles:
+                flash('You do not have permission to access this page.')
+                return redirect(url_for('home'))
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
 # ---------- FLASK APP (GUI) ----------
 
 app = Flask(__name__)
