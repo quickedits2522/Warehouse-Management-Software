@@ -870,6 +870,7 @@ def export_profit_loss():
     return send_file(filename, as_attachment=True)
 
 @app.route('/edit_shipment', methods=['POST'])
+@role_required('Admin', 'Shipping', 'Manager')
 def edit_shipment():
     shipment_id = request.form['shipment_id']
     bill_no = request.form['bill_no']
