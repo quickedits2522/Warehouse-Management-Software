@@ -148,36 +148,46 @@
   <!-- Dashboard Cards -->
   <h1>Dashboard Overview</h1>
   <main>
+    {% if role in ['Admin', 'Manager', 'Sales'] %}
     <div class="card" onclick="window.location.href='/inventory'">
       <div class="emoji">📦</div>
       <h1>Inventory</h1>
       <div class="value">{{ no_of_items }}</div>
     </div>
+    {% endif %}
 
+    {% if role in ['Admin', 'Manager', 'Shipping', 'Sales'] %}
     <div class="card" onclick="window.location.href='/shipments'">
       <div class="emoji">🚚</div>
       <h1>Shipments</h1>
       <div class="value">{{ no_of_ships }}</div>
       <div class = ></div>
     </div>
+    {% endif %}
 
+    {% if role in ['Admin', 'Manager'] %}
     <div class="card" onclick="window.location.href='/users'">
       <div class="emoji">👥</div>
       <h1>Active Users</h1>
       <div class="value">{{ no_of_users }}</div>
     </div>
+    {% endif %}
 
+    {% if role == 'Admin' %}
     <div class="card" onclick="window.location.href='/dbm'">
       <div class="emoji">🖥</div>
       <h1>Database</h1>
       <div class="value">{{ no_of_tables }}</div>
     </div>
+    {% endif %}
 
+    {% if role in ['Admin', 'Manager'] %}
     <div class="card" onclick="window.location.href='/profit_loss'">
       <div class="emoji">💰</div>
       <h1>Revenue</h1>
       <div class="value">₹ {{ revenue }}</div>
     </div>
+    {% endif %}
   </main>
 
 </body>
