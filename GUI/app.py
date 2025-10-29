@@ -847,6 +847,7 @@ def settings():
     return render_template('settings.html',settings=settings, company_name=company_name)
 
 @app.route("/profit_loss")
+@role_required('Admin', 'Manager')
 def users():
     mycursor.execute("SELECT * FROM PROFIT_AND_LOSS")
     data = mycursor.fetchall()
