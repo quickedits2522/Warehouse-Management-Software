@@ -977,6 +977,7 @@ def users_webpage():
     return render_template('users.html', company_name=company_name, users_data=users_data, count=count)
 
 @app.route('/edit_users', methods=['POST'])
+@role_required('Admin', 'Manager')
 def edit_users():
     user_id = request.form['user_id']
     name = request.form['name']
