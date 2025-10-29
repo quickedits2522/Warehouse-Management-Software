@@ -755,7 +755,53 @@ app.secret_key = "egweg4h4r4h654re65j465er562rb11rg6465w"
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
+# ---------- AUTHENTICATION ROUTES ----------
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    create_init_db()  # Ensure database tables exist
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        try:
+            mycursor.execute("SELECT * FROM LOGIN WHERE Username = %s", (username,))
+            user = mycursor.fetchone()
+            
+            if user and verify_password(password, user['Password']):
+                session['user_id'] = user['LoginID']
+                session['username'] = user['Username']
+                session['role'] = user['Role']
+                log_activity(f"User {username} logged in successfully with role {user['Role']}")
+                flash(f'Welcome back, {username}!')
+                return redirect(url_for('home'))
+            else:
+                log_activity(f"Failed login attempt for username: {username}")
+                return render_template('login.html', error='Invalid username or password')
+                
+        except Exception as e:
+            log_activity(f"Login error: {e}")
+            return render_template('login.html', error='An error occurred. Please try again.')
+    
+    # If already logged in, redirect to home
+    if 'user_id' in session:
+        return redirect(url_for('home'))
+    
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    username = session.get('username', 'Unknown')
+    log_activity(f"User {username} logged out")
+    session.clear()
+    flash('You have been logged out successfully.')
+    return redirect(url_for('login'))
+
+# ---------- APPLICATION ROUTES ----------
+
 @app.route('/')
+@login_required
 def home():
     create_init_db()
     mycursor.execute("SELECT COUNT(*) FROM USER")
