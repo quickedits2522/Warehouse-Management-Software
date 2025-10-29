@@ -147,7 +147,10 @@
   <div class="main-content">
     <header>
       <h1>🏢 {{ company_name }}</h1>
-      <a href="{{ url_for('home') }}">← Back to Dashboard</a>
+      <div>
+        <a href="{{ url_for('home') }}" style="margin-right: 10px;">← Back to Dashboard</a>
+        <a href="{{ url_for('logout') }}" style="background-color: #dc2626;">🚪 Logout</a>
+      </div>
     </header>
 
     {% with messages = get_flashed_messages() %}
