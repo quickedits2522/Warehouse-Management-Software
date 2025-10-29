@@ -19,7 +19,7 @@ import hashlib
 
 # Establish connection to MySQL database
 
-mycon = ms.connect(user = "root", passwd = "", host = "localhost", use_pure=True)
+mycon = ms.connect(user = "wmsuser", passwd = "mysql", host = "localhost", use_pure=True)
 mycursor = mycon.cursor(dictionary=True, buffered=True)
 mycursor.execute("CREATE DATABASE IF NOT EXISTS WMS")
 mycursor.execute("USE WMS")
