@@ -1009,6 +1009,7 @@ def dbms():
     return render_template('dbms.html', db_data=tables, company_name=company_name, no_of_tables=len(tables))
 
 @app.route('/delete_table/<table_name>')
+@role_required('Admin')
 def delete_table(table_name):
     mycursor.execute(f"DROP TABLE IF EXISTS {table_name}")
     mycon.commit()
