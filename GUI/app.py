@@ -969,6 +969,7 @@ def get_bill_details(bill_no):
         return jsonify({"error": str(e)}), 500
     
 @app.route('/users')
+@role_required('Admin', 'Manager')
 def users_webpage():
     mycursor.execute("SELECT * FROM USER")
     users_data = mycursor.fetchall()
