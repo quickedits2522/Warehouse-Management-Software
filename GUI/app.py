@@ -24,8 +24,16 @@ mycursor = mycon.cursor(dictionary=True, buffered=True)
 mycursor.execute("CREATE DATABASE IF NOT EXISTS WMS")
 mycursor.execute("USE WMS")
 LOG_FILE = "activity_log.txt"
-mycursor.execute("SELECT CompanyName FROM SETTINGS")
-company_name = mycursor.fetchone()['CompanyName']
+
+# Initialize company_name (will be set after database initialization)
+company_name = "WMS"
+try:
+    mycursor.execute("SELECT CompanyName FROM SETTINGS")
+    result = mycursor.fetchone()
+    if result:
+        company_name = result['CompanyName']
+except:
+    pass  # Table doesn't exist yet, will be created later
 
 #--------------- User Management ----------------
 
