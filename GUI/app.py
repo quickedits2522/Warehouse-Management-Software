@@ -159,11 +159,20 @@ def create_init_db():
                     "CREATE TABLE IF NOT EXISTS SALES(BillNo int PRIMARY KEY AUTO_INCREMENT, Customer_Name varchar(50), Products varchar(300), QTY int, Sale_Amount float, Date_Of_Sale date)",
                     "CREATE TABLE IF NOT EXISTS TRANSPORT(ShipmentID int PRIMARY KEY AUTO_INCREMENT, BillNo int, Address varchar(300), Status varchar(30), FOREIGN KEY (BillNo) REFERENCES SALES(BillNo) ON DELETE CASCADE)",
                     "CREATE TABLE IF NOT EXISTS PROFIT_AND_LOSS(BillNo int, Product_Name varchar(50), Net_Profit float)",
-                    "CREATE TABLE IF NOT EXISTS SETTINGS(CompanyName varchar(255), CompanyID int, GSTIN char(30), Company_Address varchar(255), State varchar(255), Mobile_No BIGINT, Email varchar(255), UPI varchar(40), IGST float, CGST float, SGST float)"]
+                    "CREATE TABLE IF NOT EXISTS SETTINGS(CompanyName varchar(255), CompanyID int, GSTIN char(30), Company_Address varchar(255), State varchar(255), Mobile_No BIGINT, Email varchar(255), UPI varchar(40), IGST float, CGST float, SGST float)",
+                    "CREATE TABLE IF NOT EXISTS LOGIN(LoginID int PRIMARY KEY AUTO_INCREMENT, Username varchar(50) UNIQUE NOT NULL, Password varchar(255) NOT NULL, Role ENUM('Admin', 'Manager', 'Sales', 'Shipping') NOT NULL, UserID int, FOREIGN KEY (UserID) REFERENCES USER(UserID) ON DELETE CASCADE)"]
         for i in init_tables:
             mycursor.execute(i)
         mycon.commit()
-        log_activity("Initialized USER, PRODUCTS, SALES, TRANSPORT, PROFIT_AND_LOSS and SETTINGS tables in the database")
+        log_activity("Initialized USER, PRODUCTS, SALES, TRANSPORT, PROFIT_AND_LOSS, SETTINGS and LOGIN tables in the database")
+        
+        # Create default admin user if no login users exist
+        mycursor.execute("SELECT COUNT(*) as count FROM LOGIN")
+        if mycursor.fetchone()['count'] == 0:
+            admin_password = hashlib.sha256("admin123".encode()).hexdigest()
+            mycursor.execute("INSERT INTO LOGIN (Username, Password, Role, UserID) VALUES ('admin', %s, 'Admin', NULL)", (admin_password,))
+            mycon.commit()
+            log_activity("Created default admin user (username: admin, password: admin123)")
 
     except Exception as e:
         log_activity(f"An error occurred during initialization: {e}")
