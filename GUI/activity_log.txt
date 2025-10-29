@@ -16,3 +16,10 @@
 [2025-10-29 14:36:33] [INFO] Initialized USER, PRODUCTS, SALES, TRANSPORT, PROFIT_AND_LOSS, SETTINGS and LOGIN tables in the database
 [2025-10-29 14:36:33] [INFO] User manager logged in successfully with role Manager
 [2025-10-29 14:36:33] [INFO] Initialized USER, PRODUCTS, SALES, TRANSPORT, PROFIT_AND_LOSS, SETTINGS and LOGIN tables in the database
+[2025-10-29 14:36:45] [INFO] Initialized USER, PRODUCTS, SALES, TRANSPORT, PROFIT_AND_LOSS, SETTINGS and LOGIN tables in the database
+[2025-10-29 14:36:45] [INFO] User Unknown logged out
+[2025-10-29 14:36:45] [INFO] Initialized USER, PRODUCTS, SALES, TRANSPORT, PROFIT_AND_LOSS, SETTINGS and LOGIN tables in the database
+[2025-10-29 14:36:47] [INFO] Initialized USER, PRODUCTS, SALES, TRANSPORT, PROFIT_AND_LOSS, SETTINGS and LOGIN tables in the database
+[2025-10-29 14:36:48] [INFO] Initialized USER, PRODUCTS, SALES, TRANSPORT, PROFIT_AND_LOSS, SETTINGS and LOGIN tables in the database
+[2025-10-29 14:36:48] [INFO] User sales logged in successfully with role Sales
+[2025-10-29 14:36:48] [INFO] Initialized USER, PRODUCTS, SALES, TRANSPORT, PROFIT_AND_LOSS, SETTINGS and LOGIN tables in the database
