@@ -864,6 +864,7 @@ def users():
     )
 
 @app.route('/export_profit_loss')
+@role_required('Admin', 'Manager')
 def export_profit_loss():
     filename = export_table_to_csv("PROFIT_AND_LOSS")  # Returns the file path
     return send_file(filename, as_attachment=True)
