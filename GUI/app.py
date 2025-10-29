@@ -917,6 +917,7 @@ def add_user():
         return redirect(url_for("users"))
 
 @app.route('/shipments')
+@role_required('Admin', 'Shipping', 'Manager', 'Sales')
 def shipments():
     mycursor.execute("SELECT * FROM TRANSPORT")
     shipments_data = mycursor.fetchall()
