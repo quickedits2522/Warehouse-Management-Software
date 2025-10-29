@@ -995,6 +995,7 @@ def edit_users():
     return redirect(url_for('users_webpage'))
 
 @app.route('/delete_user/<int:id>')
+@role_required('Admin', 'Manager')
 def delete_user(id):
     mycursor.execute("DELETE FROM USER WHERE UserID=%s", (id,))
     mycon.commit()
