@@ -840,6 +840,7 @@ def add_order():
     return render_template('add_order.html', products=products, success=success, company_name=company_name, company_logo="/static/logo.png", today=today)
 
 @app.route('/settings', methods=['GET', 'POST'])
+@role_required('Admin', 'Manager')
 def settings():
     mycursor.execute("SELECT * FROM SETTINGS")
     settings = mycursor.fetchall()[0]
