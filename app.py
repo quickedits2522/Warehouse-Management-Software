@@ -1593,38 +1593,6 @@ def shipments():
         pending=pending,
         delivered=delivered, username=session.get('username'))
 
-# The get_bill_details route seems to refer to non-existent tables 'bills' and 'bill_items'
-# I'll keep the function signature but comment out the inner logic as it cannot be fixed 
-# without knowing the actual schema or intent to refactor the database.
-# @app.route('/get_bill_details/<int:bill_no>')
-# def get_bill_details(bill_no):
-#     try:
-#         # This logic seems to refer to non-existent 'bills' and 'bill_items' tables.
-#         # Assuming the intent was to fetch from SALES and PROFIT_AND_LOSS
-#         mycursor.execute("SELECT * FROM SALES WHERE BillNo = %s", (bill_no,))
-#         bill = mycursor.fetchone()
-        
-#         mycursor.execute("SELECT Net_Profit FROM PROFIT_AND_LOSS WHERE BillNo = %s", (bill_no,))
-#         profit_data = mycursor.fetchone()
-
-#         if not bill:
-#             return jsonify({"error": "Bill not found"}), 404
-
-#         details = {
-#             "Bill No": bill["BillNo"],
-#             "Customer Name": bill["Customer_Name"],
-#             "Date": str(bill["Date_Of_Sale"]),
-#             "Total Amount": f"₹ {bill['Sale_Amount']:.2f}",
-#             "Net Profit": f"₹ {profit_data['Net_Profit']:.2f}" if profit_data else "N/A",
-#             "Product": bill["Products"],
-#             "Quantity": bill["QTY"]
-#         }
-
-#         return jsonify(details)
-
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
-    
 @app.route('/users')
 @login_required
 def users_webpage():

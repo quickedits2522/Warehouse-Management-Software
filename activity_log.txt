@@ -603,3 +603,4 @@ Purchase quantity exceeds available stock!
 [2025-11-01 20:13:33] [INFO] Initialized USER, PRODUCTS, SALES, TRANSPORT, PROFIT_AND_LOSS, SETTINGS and LOGIN tables in the database
 [2025-11-01 20:13:38] [INFO] Initialized USER, PRODUCTS, SALES, TRANSPORT, PROFIT_AND_LOSS, SETTINGS and LOGIN tables in the database
 [2025-11-01 20:14:04] [INFO] Initialized USER, PRODUCTS, SALES, TRANSPORT, PROFIT_AND_LOSS, SETTINGS and LOGIN tables in the database
+[2025-11-01 20:15:51] [INFO] Initialized USER, PRODUCTS, SALES, TRANSPORT, PROFIT_AND_LOSS, SETTINGS and LOGIN tables in the database
