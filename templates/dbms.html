@@ -59,6 +59,21 @@
     th.sorted-desc .arrow::after {content:"▼";}
     tr:nth-child(even) {background-color:rgba(255,255,255,0.6);}
     tr:hover {background-color:rgba(37,99,235,0.2);}
+    .card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+    }
+    body {
+      opacity: 0;
+      animation: fadeIn 0.7s ease-in forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
 </style>
 </head>
 <body>
@@ -69,7 +84,6 @@
     <h1><b>{{ company_name }}</b></h1>
   </div>
   <div class="header-right">
-    <a href="/add_order">➕ Add Order</a>
     <a href="/">🏠 Dashboard</a>
   </div>
 </header>
@@ -88,6 +102,7 @@
 
 <!-- Action Buttons -->
 <div class="action-buttons">
+  <a href="/settings"><button>⚙️ Adjust Settings</button></a>
   <a href="/export_databases"><button>📥 Export to CSV</button></a>
 </div>
 
@@ -108,9 +123,9 @@
     <tbody>
       {% for row in db_data %}
       <tr>
-        <td>{{ row.Tables_in_wms }}</td>
+        <td>{{ row.table_name }}</td>
         <td>
-          <button class="btn btn-sm btn-danger" onclick="deleteDatabase('{{ row.Tables_in_wms }}')">🗑️ Delete</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteDatabase('{{ row.table_name }}')">🗑️ Delete</button>
         </td>
       </tr>
       {% endfor %}

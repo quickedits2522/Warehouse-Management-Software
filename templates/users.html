@@ -47,6 +47,15 @@
   th.sorted-desc .arrow::after {content:"▼";}
   tr:nth-child(even) {background-color:rgba(255,255,255,0.6);}
   tr:hover {background-color:rgba(37,99,235,0.2);}
+  body {
+      opacity: 0;
+      animation: fadeIn 0.7s ease-in forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
 </style>
 </head>
 <body>
@@ -57,7 +66,6 @@
     <h1><b>{{ company_name }}</b></h1>
   </div>
   <div class="header-right">
-    <a href="/add_order">➕ Add Order</a>
     <a href="/">🏠 Dashboard</a>
   </div>
 </header>

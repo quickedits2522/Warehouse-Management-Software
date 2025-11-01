@@ -138,6 +138,16 @@
       transition: opacity 1s ease;
     }
 
+    body {
+      opacity: 0;
+      animation: fadeIn 0.7s ease-in forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    
     @media (max-width: 768px) {
       header, form {
         padding: 15px 20px;
@@ -184,6 +194,9 @@
       <option value="Dispatched">Dispatched</option>
       <option value="Delivered">Delivered</option>
     </select>
+
+    <label for="discount">Discount</label>
+    <input type="number" id="discount" name="discount" min="0" placeholder="e.g. 10" required>
 
     <label for="date">Order Date</label>
     <input type="date" id="date" name="date" required value="{{ today }}">

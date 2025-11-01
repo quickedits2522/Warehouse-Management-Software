@@ -7,16 +7,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body {
-    font-family: 'Poppins', sans-serif;
-    margin: 0;
-    padding: 0;
-
-    /* Smooth light blue gradient */
-    background: linear-gradient(135deg, #b6c7d6 0%, #95e0ea 100%);
-    min-height: 100vh;
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #b6c7d6 0%, #95e0ea 100%);
+      min-height: 100vh;
     }
 
-    /* Sticky Header */
+    /* Header */
     header {
       position: sticky;
       top: 0;
@@ -46,28 +44,139 @@
       margin: 0;
     }
 
-    .header-right a {
-      text-decoration: none;
-      color: white;
-      background-color: #2563eb;
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-weight: 600;
-      transition: 0.3s;
-      margin-left: 10px;
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 25px;
+      position: relative;
     }
 
-    .header-right a:hover {
+    /* Date/time */
+    #datetime {
+      color: #1e3a8a;
+      font-weight: 600;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #datetime span {
+      font-size: 1.2rem;
+    }
+
+    /* Avatar circle */
+    .avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2563eb, #60a5fa);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+      user-select: none;
+    }
+
+    .avatar:hover {
+      transform: scale(1.08);
+      box-shadow: 0 6px 12px rgba(37, 99, 235, 0.35);
+    }
+
+    /* Dropdown Menu */
+    .dropdown-menu {
+      position: absolute;
+      right: 0;
+      top: 60px;
+      background: rgba(240, 244, 248, 0.95);
+      backdrop-filter: blur(8px);
+      border-radius: 12px;
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+      width: 220px;
+      display: none;
+      flex-direction: column;
+      padding: 15px;
+      animation: fadeSlide 0.25s ease;
+      transform-origin: top right;
+    }
+
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: scale(0.95) translateY(-6px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .dropdown-menu.show {
+      display: flex;
+    }
+
+    .dropdown-menu h4 {
+      margin: 0;
+      font-size: 1rem;
+      color: #1e3a8a;
+      text-align: center;
+    }
+
+    .dropdown-menu p {
+      margin: 3px 0 10px;
+      font-size: 0.85rem;
+      color: #374151;
+      text-align: center;
+    }
+
+    .dropdown-menu button {
+      border: none;
+      background-color: #2563eb;
+      color: white;
+      padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      margin: 5px 0;
+      transition: 0.3s;
+    }
+
+    .dropdown-menu button:hover {
       background-color: #1d4ed8;
-      transform: scale(1.05);
+    }
+
+    .dropdown-menu .logout-btn {
+      background-color: #ef4444;
+    }
+
+    .dropdown-menu .logout-btn:hover {
+      background-color: #dc2626;
+    }
+
+    /* Dashboard Styling (unchanged) */
+    p {
+      font-size: 2rem;
+      margin-bottom: 0px;
+      margin-top: 10px;
+      text-align: center;
+      color: #1e3a8a;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      text-align: center;
+      color: #1e3a8a;
+      margin-bottom: 30px;
+      margin-top: 60px;
     }
 
     main {
       padding: 40px 50px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(3, 1fr);
       gap: 25px;
-      margin-top: 20px;
+      margin-top: -30px;
+      justify-items: center;
+      align-items: center;
     }
 
     .card {
@@ -77,35 +186,62 @@
       padding: 20px;
       text-align: center;
       box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      transition: transform 0.3s ease;
       cursor: pointer;
-      height: 350px;
+      width: 550px;
+      max-width: 550px;
+      height: 260px;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      font-family: 'Poppins', sans-serif;
     }
 
     .card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
     }
 
-    .card div.emoji {
-      font-size: 3rem;
-      margin-bottom: 8px;
+    .card .emoji {
+      font-size: 4rem;
+      margin-bottom: 10px;
     }
 
     .card h1 {
+      font-size: 1.4rem;
       margin: 10px 0 5px 0;
       color: #1e3a8a;
     }
 
     .card .value {
-      font-size: 2.8rem;
+      font-size: 3rem;
       font-weight: 600;
       color: #111827;
+      margin-bottom: 6px;
+      transition: color 0.3s ease;
+    }
+
+    .card .subtext {
+      font-size: 0.95rem;
+      color: #374151;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .card:hover .subtext {
+      opacity: 0.9;
+      transform: translateY(0);
+    }
+
+    .profit-positive { color: #10b981; }
+    .profit-negative { color: #ef4444; }
+
+    @media (max-width: 1024px) {
+      main { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 700px) {
+      main { grid-template-columns: 1fr; }
     }
 
     footer {
@@ -113,70 +249,131 @@
       padding: 15px;
       font-size: 0.85rem;
       color: #6b7280;
+      margin-top: 40px;
     }
 
-    h1 {
-      text-align:center;
-      color:#1e3a8a;
-      margin-bottom:30px;
-      margin-top: 60px;}
+    body {
+      opacity: 0;
+      animation: fadeIn 0.7s ease-in forwards;
+    }
 
-    @media (max-width: 768px) {
-      main {
-        padding: 20px;
-        grid-template-columns: 1fr;
-      }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Sticky Header -->
+  <!-- Header -->
   <header>
     <div class="header-left">
       <img src="/static/logo.png" alt="Company Logo">
       <h1>{{ company_name }}</h1>
     </div>
     <div class="header-right">
-      <a href="/add_order">➕ Add Order</a>
-      <a href="/settings">⚙️ Settings</a>
+      <div id="datetime">
+        <span>⏰</span>
+        <div id="timeText">Loading...</div>
+      </div>
+
+      <!-- Profile Avatar -->
+      <div class="avatar" id="avatar">{{ username[0]|upper }}</div>
+
+      <!-- Dropdown -->
+      <div class="dropdown-menu" id="dropdownMenu">
+        <h4>{{ username }}</h4>
+        <button class="logout-btn" onclick="window.location.href='/logout'">Logout</button>
+      </div>
     </div>
   </header>
 
-  <!-- Dashboard Cards -->
+  <!-- Dashboard -->
   <h1>Dashboard Overview</h1>
   <main>
     <div class="card" onclick="window.location.href='/inventory'">
       <div class="emoji">📦</div>
-      <h1>Inventory</h1>
+      <p><b>Inventory</b></p>
       <div class="value">{{ no_of_items }}</div>
+      <div class="subtext">Total items available</div>
     </div>
 
-    <div class="card" onclick="window.location.href='/shipments'">
-      <div class="emoji">🚚</div>
-      <h1>Shipments</h1>
-      <div class="value">{{ no_of_ships }}</div>
-      <div class = ></div>
+    <div class="card" id="profitCard" onclick="window.location.href='/profit_loss'">
+      <div class="emoji">💹</div>
+      <p><b>Net Profit</b></p>
+      <div class="value" id="profitValue">₹{{ profit }}</div>
+      <div class="subtext">Profit after expenses</div>
+    </div>
+
+    <div class="card" onclick="window.location.href='/sales'">
+      <div class="emoji">💰</div>
+      <p><b>Sales</b></p>
+      <div class="value">₹{{ revenue }}</div>
+      <div class="subtext">Total revenue generated</div>
     </div>
 
     <div class="card" onclick="window.location.href='/users'">
       <div class="emoji">👥</div>
-      <h1>Active Users</h1>
+      <p><b>Active Users</b></p>
       <div class="value">{{ no_of_users }}</div>
+      <div class="subtext">Users currently active</div>
+    </div>
+
+    <div class="card" onclick="window.location.href='/shipments'">
+      <div class="emoji">🚚</div>
+      <p><b>Shipments</b></p>
+      <div class="value">{{ no_of_ships }}</div>
+      <div class="subtext">Pending or ongoing deliveries</div>
     </div>
 
     <div class="card" onclick="window.location.href='/dbm'">
       <div class="emoji">🖥</div>
-      <h1>Database</h1>
+      <p><b>Database</b></p>
       <div class="value">{{ no_of_tables }}</div>
-    </div>
-
-    <div class="card" onclick="window.location.href='/profit_loss'">
-      <div class="emoji">💰</div>
-      <h1>Revenue</h1>
-      <div class="value">₹ {{ revenue }}</div>
+      <div class="subtext">Tables currently in use</div>
     </div>
   </main>
+
+  <!-- Scripts -->
+  <script>
+    // Profit color
+    document.addEventListener('DOMContentLoaded', () => {
+      const profitValueElement = document.getElementById('profitValue');
+      if (!profitValueElement) return;
+      const text = profitValueElement.textContent.replace(/[₹,\s]/g, '');
+      const profit = parseFloat(text);
+      if (!isNaN(profit)) {
+        profitValueElement.classList.add(profit >= 0 ? 'profit-positive' : 'profit-negative');
+      }
+    });
+
+    // Date/time
+    function updateDateTime() {
+      const now = new Date();
+      const options = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      };
+      document.getElementById('timeText').textContent = now.toLocaleString('en-US', options);
+    }
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+
+    // Dropdown toggle
+    const avatar = document.getElementById('avatar');
+    const dropdown = document.getElementById('dropdownMenu');
+    avatar.addEventListener('click', () => {
+      dropdown.classList.toggle('show');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!avatar.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.remove('show');
+      }
+    });
+  </script>
 
 </body>
 </html>
