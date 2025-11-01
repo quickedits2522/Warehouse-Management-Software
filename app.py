@@ -699,6 +699,306 @@ def checks():
         log_activity("No products found in the inventory. Please add products to proceed.\n")
         add_stock()
 
+def checks():
+
+    # Ensure database and tables exist, and prompt for initial setup if needed
+
+    low_stock_alert()
+    mycursor.execute("SELECT COUNT(*) FROM SETTINGS")
+    if mycursor.fetchone()[0] == 0:
+        print("No company settings found. Please set up your company details.")
+        set_settings()
+
+    mycursor.execute("SELECT * FROM SETTINGS")
+    settings = mycursor.fetchall()
+    print("="*70)
+    print(f"\nWelcome to {settings[0][0]} Warehouse Management System (WMS)\n")
+    print("="*70)
+
+    mycursor.execute("SELECT * FROM USER")
+    users = mycursor.fetchall()
+    if not users:
+        print("No users found in the system. Please add users to proceed.\n")
+        add_user()
+
+    mycursor.execute("SELECT * FROM PRODUCTS")
+    products = mycursor.fetchall()
+    if not products:
+        print("No products found in the inventory. Please add products to proceed.\n")
+        add_stock()
+
+def print_divider():
+    print("\n" + "="*60)
+
+def main_menu():
+
+    while True:
+        print("Main Menu:")
+        print("1. User Management")
+        print("2. Stock Management")
+        print("3. Sales Management")
+        print("4. Shipment Management")
+        print("5. Database Management")
+        print("6. Analytics Dashboard")
+        print("7. Exit")
+
+        try :
+            choice = input("Enter your choice (1-7): ")
+
+        except KeyboardInterrupt:
+            print("\nExiting the program. Goodbye!")
+            break
+
+        if choice == '1':
+
+            # --- USER MANAGEMENT ---
+            
+            while True:
+                print("User Management:")
+                print("a. Add User")
+                print("b. Remove User")
+                print("c. Search User")
+                print("d. Update User Info")
+                print("e. View All Users")
+                print("f. Back to Main Menu")
+
+                ch = input("Enter your choice: ").lower()
+
+                if ch == 'a':
+                    add_user()
+                    print_divider()
+
+                elif ch == 'b':
+                    remove_user()
+                    print_divider()
+
+                elif ch == 'c':
+                    search_user()
+                    print_divider()
+
+                elif ch == 'd':
+                    update_user()
+                    print_divider()
+
+                elif ch == 'e':
+                    user_info()
+                    print_divider()
+
+                elif ch == 'f':
+                    break
+
+                else:
+                    print("Invalid Choice. Please try again.")
+                    print_divider()
+                    continue
+
+                cont = input("Do you want to continue in User Management? (y/n): ")
+
+                if cont.lower() != 'y':
+                    print_divider()
+                    break
+
+        elif choice == '2':
+
+            # --- PRODUCT MANAGEMENT ---
+
+            while True:
+                print("Stock Management:")
+                print("a. Add Product")
+                print("b. Remove Product")
+                print("c. Search Product")
+                print("d. Update Product Info")
+                print("e. View All Products")
+                print("f. Low Stock Alert")
+                print("g. Back to Main Menu")
+
+                try : 
+                    ch = input("Enter your choice: ").lower()
+                except KeyboardInterrupt:
+                    print("\nExiting the program. Goodbye!")
+                    sys.exit(0)
+
+                if ch == 'a':
+                    add_stock()
+                    print_divider()
+
+                elif ch == 'b':
+                    remove_stock()
+                    print_divider()
+
+                elif ch == 'c':
+                    search_stock()
+                    print_divider()
+
+                elif ch == 'd':
+                    update_stock()
+                    print_divider()
+
+                elif ch == 'e':
+                    product_info()
+                    print_divider()
+                
+                elif ch == 'f':
+                    low_stock_alert()
+                    print_divider()
+                
+                elif ch == 'g':
+                    break
+
+                else:
+                    print("Invalid Choice. Please try again.")
+                    print_divider()
+                    continue
+
+                cont = input("Do you want to continue in Stock Management? (y/n): ")
+                if cont.lower() != 'y':
+                    print_divider()
+                    break
+
+        elif choice == '3':
+
+            # --- SALES MANAGEMENT ---
+
+            while True:
+                print("Sales Management:")
+                print("a. Record Sale")
+                print("b. Delete Sale")
+                print("c. View All Sales")
+                print("d. Search Sale")
+                print("e. Back to Main Menu")
+
+                try : 
+                    ch = input("Enter your choice: ").lower()
+                except KeyboardInterrupt:
+                    print("\nExiting the program. Goodbye!")
+                    sys.exit(0)
+
+                if ch == 'a':
+                    custm_name = input("Enter Customer Name: ")
+                    address = input("Enter Customer Address: ")
+                    product = input("Enter Product Name: ")
+                    qty = int(input("Enter Quantity: "))
+                    today = date.today()
+                    status = input("Enter Shipment Status: ")
+                    record_sale(custm_name, address, product, qty, today, status)
+                    print_divider()
+
+                elif ch == 'b':
+                    delete_sale()
+                    print_divider()
+                
+                elif ch == 'c':
+                    sale_info()
+                    print_divider()
+                
+                elif ch == 'd':
+                    search_sale()
+                    print_divider()
+                
+                elif ch == 'e':
+                    break
+
+                else:
+                    print("Invalid Choice. Please try again.")
+                    print_divider()
+
+                cont = input("Do you want to continue in Sales Management? (y/n): ")
+                if cont.lower() != 'y':
+                    print_divider()
+                    break
+
+        elif choice == '4':
+            # --- SHIPMENT MANAGEMENT ---
+            while True:
+                print("Shipment Management:")
+                print("a. View all Shipments")
+                print("b. Search Shipment")
+                print("c. Update Shipment Status")
+                print("d. Delete Shipment Record")
+                print("e. Back to Main Menu")
+
+
+                try : 
+                    ch = input("Enter your choice: ").lower()
+                except KeyboardInterrupt:
+                    print("\nExiting the program. Goodbye!")
+                    sys.exit(0)
+
+                if ch == 'a':
+                    shipping_info()
+                    print_divider()
+
+                elif ch == 'b':
+                    search_ship()
+                    print_divider()
+
+                elif ch == 'c':
+                    update_shipment_status()
+                    print_divider()
+                
+                elif ch == 'd':
+                    remove_sale()  # Deleting sale will also delete shipment due to foreign key constraint
+                    print_divider()
+                
+                elif ch == 'e':
+                    break
+
+                else:
+                    print("Invalid Choice. Please try again.")
+                    print_divider()
+                    continue
+
+                cont = input("Do you want to continue in Shipment Management? (y/n): ")
+                if cont.lower() != 'y':
+                    print_divider()
+                    break
+
+        elif choice == '5':
+            # ---- DATABASE MANAGEMENT ---- 
+            while True:
+                print("Database Management:")
+                print("a. Delete Entire Database")
+                print("b. Export Table to CSV")
+                print("c. Back to Main Menu")
+
+                try : 
+                    ch = input("Enter your choice: ").lower()
+                except KeyboardInterrupt:
+                    print("\nExiting the program. Goodbye!")
+                    sys.exit(0)
+
+                if ch == 'a':
+                    delete_db()
+                    print_divider()
+                    print("Exiting the program as the database has been deleted.")
+                    sys.exit(0)  # Exit after deleting the database to prevent further operations
+
+                elif ch == 'b':
+                    export_table_to_csv(input("Enter the table name to export: "))
+                    print_divider()
+
+                elif ch == 'c':
+                    break
+
+                else:
+                    print("Invalid Choice. Please try again.")
+                    print_divider()
+                    continue
+
+                cont = input("Do you want to continue in Database Management? (y/n): ")
+                if cont.lower() != 'y':
+                    print_divider()
+                    break
+        
+        elif choice == '7':
+            print("Exiting the program. Goodbye!")
+            print("=" * 60)
+            break
+
+        else:
+            print("Invalid choice. Please try again.")
+            print_divider()
+
 # ---------- FLASK APP (GUI) ----------
 
 app = Flask(__name__)
@@ -910,4 +1210,9 @@ def delete_table(table_name):
 
 if __name__ == '__main__':
     create_init_db()
-    app.run(debug=True)
+    userinput = int(input('Enter 1 for CLI or 2 for GUI: '))
+    if userinput == 1:
+        create_init_db()
+        main_menu()
+    else:
+        app.run()
