@@ -165,7 +165,7 @@
   <!-- Settings Container -->
   <div class="container">
     <h2>⚙️ Edit System Settings</h2>
-    <form method="POST" action="/update_settings" autocomplete="on">
+    <form method="POST" action="/settings" autocomplete="on">
       {% for key, value in settings.items() %}
       <div class="setting">
         <div class="label">{{ key }}</div>
