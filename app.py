@@ -21,6 +21,7 @@ import io
 import webbrowser
 from flask import Flask, jsonify, render_template, request, redirect, send_file, url_for, flash, session
 from flask_bcrypt import Bcrypt
+from flask import after_this_request
 from functools import wraps
 from sqlalchemy import create_engine
 
@@ -120,7 +121,7 @@ def export_table_to_csv(table_name):
         df.to_csv(filename, index=False)
         filepath = os.path.abspath(filename)
         log_activity(f"Exported {table_name} data to {filepath}")
-        return filename
+        return filepath
     except Exception as e:
         log_activity(f"Error exporting data: {e}")
         return None
@@ -1375,6 +1376,24 @@ def view_invoice(bill_no):
         flash(f"Error opening invoice: {e}", "error")
         return redirect(url_for('sales'))
 
+@app.route('/export_sales')
+@login_required
+def export_sales():
+    """Route to export sales table to CSV."""
+    filename = export_table_to_csv("SALES")
+    if filename and os.path.exists(filename):
+        @after_this_request
+        def cleanup(response):
+            try:
+                os.remove(filename)
+            except Exception as e:
+                log_activity(f"Failed to delete temp file {filename}: {e}")
+            return response
+        return send_file(filename, as_attachment=True)
+    else:
+        flash("❌ Error exporting sales data.", "error")
+        return redirect(url_for('sales'))
+
 # ---------- User Profile Management ----------
 
 @app.route('/profile', methods=['GET', 'POST'])
@@ -1526,7 +1545,7 @@ def p_and_l():
 def export_profit_loss():
     """Route to export profit and loss table to CSV."""
     filename = export_table_to_csv("PROFIT_AND_LOSS")
-    if filename:
+    if filename and os.path.exists(filename):
         return send_file(filename, as_attachment=True)
     else:
         flash("❌ Error exporting profit & loss data.", "error")
@@ -1572,11 +1591,12 @@ def add_product():
 def export_inventory(): 
     """Route to export products table to CSV."""
     filename = export_table_to_csv("PRODUCTS")
-    if filename:
+    if filename and os.path.exists(filename):
         log_activity("Exported Products Info")
         return send_file(filename, as_attachment=True)
         
     else:
+        flash("❌ Error exporting inventory.", "error")
         return redirect(url_for('inventory'))
 
 @app.route('/delete_product/<int:id>')
@@ -1707,7 +1727,7 @@ def export_shipments():
     """Route to export transport table to CSV."""
 
     filename = export_table_to_csv("TRANSPORT")
-    if filename:
+    if filename and os.path.exists(filename):
         return send_file(filename, as_attachment=True)
     else:
         flash("❌ Error exporting shipments data.", "error")
@@ -1824,6 +1844,24 @@ def reset_password():
 
     log_activity("Password reset successfully!", "success")
     return redirect(url_for('login'))
+
+@app.route('/export_users')
+@login_required
+def export_users():
+    """Route to export user table to CSV."""
+    filename = export_table_to_csv("USER")
+    if filename and os.path.exists(filename):
+        @after_this_request
+        def cleanup(response):
+            try:
+                os.remove(filename)
+            except Exception as e:
+                log_activity(f"Failed to delete temp file {filename}: {e}")
+            return response
+        return send_file(filename, as_attachment=True)
+    else:
+        flash("❌ Error exporting user data.", "error")
+        return redirect(url_for('users_webpage'))
 
 # ---------- Company Database Management ----------
 
