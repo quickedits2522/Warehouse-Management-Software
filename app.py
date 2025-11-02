@@ -231,7 +231,7 @@ def update_user_cli():
         column = input("Enter Column where the value is to be changed: ")
         value1 = int(input("Enter UserID of the entry to be updated: "))
         value2 = input("Enter Updated value: ")
-        mycursor.execute(f"UPDATE USER SET {column} = {value2} WHERE UserID = {value2}")
+        mycursor.execute(f"UPDATE USER SET {column} = {value2} WHERE UserID = {value1}")
         mycon.commit()
         log_activity(f"Value of column : {column} updated to {value2} successfully updated for UserID : {value1}")
 
@@ -424,12 +424,14 @@ def search_sale_cli():
 
     try:
         billno = input("Enter the BillNo of the sale record to be searched : ")
-        mycursor.execute("SELECT * FROM SALES WHERE BillNo = %s", (billno,))
-        table = from_db_cursor(mycursor)
+        ncursor = mycon.cursor()  # no dictionary, no buffered
+        ncursor.execute("SELECT * FROM SALES WHERE BillNo = %s", (billno,))
+        table = from_db_cursor(ncursor)
         if not table._rows :
             log_activity(f"No records found for BillNo : {billno}")
         else :
-            log_activity(table)
+            ##log_activity(table)
+            print(table)  # <-- print to terminal, not to log
             log_activity(f"Displayed record for BillNo : {billno}")
 
     except Exception as e:
