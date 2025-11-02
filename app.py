@@ -880,6 +880,7 @@ def main_menu():
             # --- USER MANAGEMENT ---
 
             while True:
+                print_divider()
                 print("\nUser Management:")
                 print("a. Add User")
                 print("b. Remove User")
@@ -929,6 +930,7 @@ def main_menu():
             # --- PRODUCT MANAGEMENT ---
 
             while True:
+                print_divider()
                 print("\nStock Management:")
                 print("a. Add Product")
                 print("b. Remove Product")
@@ -982,6 +984,7 @@ def main_menu():
             # --- SALES MANAGEMENT ---
 
             while True:
+                print_divider()
                 print("\nSales Management:")
                 print("a. Record Sale")
                 print("b. Delete Sale")
@@ -1041,6 +1044,7 @@ def main_menu():
             # --- SHIPMENT MANAGEMENT ---
 
             while True:
+                print_divider()
                 print("\nShipment Management:")
                 print("a. View all Shipments")
                 print("b. Search Shipment")
@@ -1089,6 +1093,7 @@ def main_menu():
             # ---- DATABASE MANAGEMENT ---- 
 
             while True:
+                print_divider()
                 print("\nDatabase Management:")
                 print("a. Delete Entire Database (All Tables)")
                 print("b. Export Table to CSV")
