@@ -69,6 +69,21 @@
     th.sorted-desc .arrow::after {content:"▼";}
     tr:nth-child(even) {background-color:rgba(255,255,255,0.6);}
     tr:hover {background-color:rgba(37,99,235,0.2);}
+    .card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+    }
+    body {
+      opacity: 0;
+      animation: fadeIn 0.7s ease-in forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
 </style>
 </head>
 <body>
@@ -84,6 +99,19 @@
 </header>
 
 <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="container mt-3">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  
 <h2><b>Shipments</b></h2>
 
 <!-- Summary Cards -->

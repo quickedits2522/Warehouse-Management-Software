@@ -1,3 +1,9 @@
+################################################################################################################
+# ===================================== WAREHOUSE MANAGMENT SOFTWARE ========================================= #
+################################################################################################################
+
+# -------- Module Imports --------
+
 import logging
 import os
 import sys
@@ -14,40 +20,28 @@ import qrcode
 import io
 import webbrowser
 from flask import Flask, jsonify, render_template, request, redirect, send_file, url_for, flash, session
-import bcrypt
+from flask_bcrypt import Bcrypt
 from functools import wraps
 
-# Establish connection to MySQL database
-# Ensure user and password are correct for your MySQL setup
+# -------- MySQL Connection ---------
+
 mycon = ms.connect(user = "root", passwd = "mysql", host = "localhost", use_pure=True)
-# Cursor is initialized as a dictionary cursor for easy column access
 mycursor = mycon.cursor(dictionary=True, buffered=True)
 mycursor.execute("CREATE DATABASE IF NOT EXISTS WMS")
 mycursor.execute("USE WMS")
-company_name = None
-
-LOG_FILE = "activity_log.txt"
+company_name = "WMS App" 
 
 def new_cursor():
     return mycon.cursor(dictionary=True, buffered=True)
 
-# Initialize company_name globally for Flask routes to prevent error
-# This value will be updated in the main block after check_settings_filled()
-company_name = "WMS App" 
-try:
-    mycursor.execute("SELECT CompanyName FROM SETTINGS LIMIT 1")
-    setting_result = mycursor.fetchone()
-    if setting_result:
-        company_name = setting_result['CompanyName']
-except ms.Error as e:
-    # This handles the case where SETTINGS table might not exist yet
-    if 'Table' not in str(e) and 'exist' not in str(e):
-        print(f"Database error during initial company name fetch: {e}")
+# --------------- Log File  ----------------
 
+LOG_FILE = "/logs/activity_log.txt"
 
-# Function to log activities to console and file
 def log_activity(message, level="INFO"):
+
     """Log activities with timestamp and level to a log file and print to console."""
+
     try:
         log_dir = os.path.dirname(LOG_FILE)
         if log_dir and not os.path.exists(log_dir):
@@ -64,202 +58,39 @@ def log_activity(message, level="INFO"):
     except Exception as e:
         print(f"Failed to log activity: {e}")
 
-# CLI user management function wrapper for the main menu, as it calls add_user()
-def add_user():
-    add_user_cli()
-
-#--------------- User Management ----------------
-
-def add_user_cli():
-    """CLI function to add a new user to the USER table."""
-    try : 
-        # UserID is now AUTO_INCREMENT, so we only need Name, Dept, and Sal
-        # The database schema for USER table has (UserID int PRIMARY KEY AUTO_INCREMENT, Name varchar(50), username varchar(50) UNIQUE,  Department varchar(30), Salary int)
-        # However, the CLI only asks for UserID, Name, Dept, Sal. To match the schema, 
-        # we'll add 'username' in the database (which is used for LOGIN) but it's missing in CLI.
-        # For simplicity, since UserID is AUTO_INCREMENT, we'll ask for username in CLI too.
-        # The original code only took UserID, Name, Dept, Sal.
-        
-        # Original: userid = input("Enter UserID: ") 
-        # Modified to use AUTO_INCREMENT and add a placeholder 'username'
-        name = input("Enter Username (Real Name): ")
-        username_login = input("Enter Login Username (Unique): ")
-        dept = input("Enter Department: ")
-        sal = int(input("Enter Salary: "))
-    
-        # Insert into USER table (UserID is auto-generated)
-        mycursor.execute("INSERT INTO USER (Name, username, Department, Salary) VALUES (%s, %s, %s, %s)", (name, username_login, dept, sal))
-        mycon.commit()
-        log_activity(f"User '{name}' successfully added to the table with username '{username_login}'")
-
-    except ms.IntegrityError:
-        # UserID is AUTO_INCREMENT, so this error is likely for the UNIQUE 'username' column
-        log_activity(f"Username : {username_login} already exists. Please use a unique username.")
-
-    except ValueError: 
-        log_activity("Invalid input. Please enter the correct data types for salary.")
-
-    except Exception as e:
-        log_activity(f"An error occurred: {e}")
-
-def remove_user_cli():
-    """CLI function to delete a user by UserID."""
-    try :
-        delete_id = input("Enter UserID of the entry to be deleted : ")
-        # Using parameterized query for better security
-        mycursor.execute("DELETE FROM USER WHERE UserID = %s", (delete_id,))
-        mycon.commit()
-        if mycursor.rowcount == 0:
-            log_activity(f"No user found with UserID: {delete_id}. No entry deleted.")
-        else:
-            log_activity(f"Entry successfully deleted from the table for userID : {delete_id}")
-        
-    except Exception as e:
-        log_activity(f"An error occurred: {e}")
-
-def search_user_cli():
-    """CLI function to search and display a user by UserID."""
-    try : 
-        user = input("Enter UserID of the user to be found: ")
-        mycursor.execute("select * from user where UserID = %s", (user,))
-        table = from_db_cursor(mycursor)
-        if not table._rows :
-            log_activity(f"No records found for UserID : {user}")
-        else :
-            log_activity(table)
-
-    except Exception as e:
-        log_activity(f"An error occurred: {e}")
-
-def update_user_cli():
-    """CLI function to update a specific column for a user by UserID."""
-    try :
-        column = input("Enter Column where the value is to be changed: ")
-        value1 = input("Enter UserID of the entry to be updated: ")
-        value2 = input("Enter Updated value: ")
-        # Warning: Direct string formatting for column name can be an SQL injection risk.
-        # For a simple CLI, we proceed, but for production, this should be validated.
-        mycursor.execute(f"UPDATE USER SET {column} = %s WHERE UserID = %s", (value2, value1))
-        mycon.commit()
-        log_activity(f"Value of column : {column} updated to {value2} successfully updated for UserID : {value1}")
-
-    except Exception as e:
-        log_activity(f"An error occurred: {e}")
-
-#--------------- Product Management ----------------
-
-def add_stock_cli():
-    """CLI function to add a new product to the PRODUCTS table."""
-    try : 
-        # ProductID is AUTO_INCREMENT, but the original code asks for it. 
-        # We will keep it as AUTO_INCREMENT and remove the input.
-        # Original: pdtid = input("Enter ProductID: ") 
-        name = input("Enter product name: ")
-        cost = float(input("Enter cost price of product: "))
-        mrp = float(input("Enter MRP of product: "))
-        qty = int(input("Enter quantity of product: "))
-    
-        # Insert, letting ProductID be auto-generated
-        mycursor.execute("INSERT INTO PRODUCTS (Product_Name, Cost_Price, MRP, Quantity) VALUES (%s, %s, %s, %s)", (name, cost, mrp, qty))
-        mycon.commit()
-        log_activity(f"Record successfully added for Product Name : {name}, Cost Price : {cost}, MRP : {mrp}, Quantity : {qty}")
-
-    except ms.IntegrityError as e:
-        # ProductID is AUTO_INCREMENT, so integrity error is unlikely here unless product name is unique (not enforced by schema)
-        log_activity(f"An Integrity Error occurred: {e}")
-
-    except ValueError: 
-        log_activity("Invalid input. Please enter the correct data types (numbers for cost, mrp, qty).")
-
-    except Exception as e:
-        log_activity(f"An error occurred: {e}")
-
-def remove_stock_cli():
-    """CLI function to delete a product by ProductID."""
-    try :
-        value = input("Enter the ProductID of the entry to be deleted: ")
-        mycursor.execute("delete from Products where ProductID = %s",(value,))
-        mycon.commit()
-        if mycursor.rowcount == 0:
-            log_activity(f"No product found with ProductID: {value}. No entry deleted.")
-        else:
-            log_activity(f"ProductID : {value} successfully deleted from the table Products")
-
-    except Exception as e:
-        log_activity(f"An error occurred: {e}")
-
-def search_stock_cli():
-    """CLI function to search and display a product by ProductID."""
-    try:
-        product = input("Enter the ProductID of the entry to be dislayed: ")
-        mycursor.execute("SELECT * FROM Products WHERE ProductID = %s", (product,))
-        table = from_db_cursor(mycursor)
-        if not table._rows :
-            log_activity(f"No records found for ProductID: {product}")
-        else :
-            log_activity(table)
-
-    except Exception as e:
-        log_activity(f"An error occurred: {e}")
-
-def update_stock_cli():
-    """CLI function to update a specific column for a product by ProductID."""
-    try :
-        column = input("Enter Column where the value is to be changed: ")
-        value1 = input("Enter ProductID of the entry to be updated: ")
-        value2 = input("Enter updated value: ")
-        # Warning: Direct string formatting for column name can be an SQL injection risk.
-        # For a simple CLI, we proceed, but for production, this should be validated.
-        mycursor.execute(f"update Products set {column} = %s where ProductID = %s", (value2, value1))
-        mycon.commit()
-        log_activity(f"Value of {column} updated to {value2} for the ProductID : {value1} successfully")
-
-    except Exception as e:
-        log_activity(f"An error occurred: {e}")
-
-
-def check_settings_filled():
-    """Checks if company settings are present and returns the company name or an error message."""
-    cursor = mycon.cursor(dictionary=True)
-    cursor.execute("SELECT COUNT(*) AS count FROM SETTINGS")
-    result = cursor.fetchone()
-    
-    if result and result['count'] == 0:
-        return "ADD COMPANY NAME IN SETTINGS"
-    
-    cursor.execute("SELECT CompanyName from SETTINGS LIMIT 1")
-    company_name = cursor.fetchone()
-    return company_name['CompanyName']
+# ------------ Database Related Functions -------------
 
 def create_init_db():
+
     """Creates all required tables if they do not exist."""
+
     try : 
-        # Ensure Foreign Key is only used when the referenced table is created
         init_tables=[
-            "CREATE TABLE IF NOT EXISTS USER(UserID int PRIMARY KEY AUTO_INCREMENT, Name varchar(50), username varchar(50) UNIQUE,  Department varchar(30), Salary int)",
+            "CREATE TABLE IF NOT EXISTS USER (UserID INT PRIMARY KEY AUTO_INCREMENT, Name VARCHAR(50) NOT NULL, Username VARCHAR(50) UNIQUE NOT NULL, Department VARCHAR(30), Salary INT )",
             "CREATE TABLE IF NOT EXISTS PRODUCTS(ProductID int PRIMARY KEY AUTO_INCREMENT, Product_Name varchar(50), Cost_Price float, MRP float, Quantity int)",
             "CREATE TABLE IF NOT EXISTS SALES(BillNo int PRIMARY KEY AUTO_INCREMENT, Customer_Name varchar(50), Products varchar(300), QTY int, Sale_Amount float, Date_Of_Sale date)",
-            # TRANSPORT references SALES, so it must be created after SALES
             "CREATE TABLE IF NOT EXISTS TRANSPORT(ShipmentID int PRIMARY KEY AUTO_INCREMENT, BillNo int, Address varchar(300), Status varchar(30), FOREIGN KEY (BillNo) REFERENCES SALES(BillNo) ON DELETE CASCADE)",
             "CREATE TABLE IF NOT EXISTS PROFIT_AND_LOSS(BillNo int, Product_Name varchar(50), Net_Profit float)",
             "CREATE TABLE IF NOT EXISTS SETTINGS(CompanyName varchar(255), CompanyID VARCHAR(255), GSTIN char(30), Company_Address varchar(255), State varchar(255), Mobile_No BIGINT, Email varchar(255), UPI varchar(40), IGST float, CGST float, SGST float)",
-            # LOGIN references USER, so it must be created after USER
-            "CREATE TABLE IF NOT EXISTS LOGIN(UserID int, Username varchar(255), Password varchar(255), Department varchar(30), FOREIGN KEY (UserID) REFERENCES USER(UserID) ON DELETE CASCADE)"
+            "CREATE TABLE IF NOT EXISTS LOGIN (LoginID INT PRIMARY KEY AUTO_INCREMENT, UserID INT NOT NULL, Username VARCHAR(255) NOT NULL, Password VARCHAR(255) NOT NULL, Department VARCHAR(30), FOREIGN KEY (UserID) REFERENCES USER(UserID) ON DELETE CASCADE )"
         ]
+
         for i in init_tables:
             mycursor.execute(i)
         mycon.commit()
+
         log_activity("Initialized USER, PRODUCTS, SALES, TRANSPORT, PROFIT_AND_LOSS, SETTINGS and LOGIN tables in the database")
 
     except Exception as e:
         log_activity(f"An error occurred during initialization: {e}")
 
 def delete_db_cli():
-    """Deletes all tables from the database (irreversible)."""
+
+    """Deletes all tables from the database (irreversible action!)."""
+
     try : 
         log_activity("WARNING! : This process is irreversible, All your data will be deleted permanently!!")
         usr_confirm = input("Do you want to continue (Y/N) : ")
-        # Drop tables in an order that avoids foreign key constraint issues (children before parents)
         tables = ["TRANSPORT", "LOGIN", "PROFIT_AND_LOSS", "SALES", "PRODUCTS", "USER", "SETTINGS"]
         if usr_confirm in "Yy":
             for i in tables:
@@ -276,210 +107,31 @@ def delete_db_cli():
     except Exception as e:
         log_activity(f"An error occurred: {e}")
 
-def record_sale(custm_name, address, product, qty, today, status, discount = 0.0):
-    """Record a sale, update inventory, generate bill, and record shipment."""
+def export_table_to_csv(table_name):
+    """Exports data from a specified database table to a CSV file."""
+    try:
+        query = f"SELECT * FROM {table_name}"
+        # pandas.read_sql is used to fetch data directly into a DataFrame
+        df = pd.read_sql(query, mycon) 
+        filename = f"{table_name}_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        df.to_csv(filename, index=False)
+        # Get the absolute path for clean logging
+        filepath = os.path.abspath(filename)
+        log_activity(f"Exported {table_name} data to {filepath}")
+        return filename
+    except Exception as e:
+        log_activity(f"Error exporting data: {e}")
+        return None
     
-    # Convert discount percentage to a decimal rate
-    discount_rate = discount / 100.0 if discount > 0.0 else 0.0
-
-    try:
-        # Fetch MRP, Cost Price, and Quantity available
-        mycursor.execute("SELECT MRP, Cost_Price, Quantity FROM PRODUCTS WHERE Product_Name = %s", (product,))
-        output = mycursor.fetchall()
-        
-        if not output:
-             log_activity(f"\nProduct '{product}' not found in inventory.")
-             return # Exit function
-
-        mrp = float(output[0]['MRP'])
-        qty_avl = int(output[0]['Quantity'])
-        cost_price = float(output[0]['Cost_Price'])
-
-        log_activity(f"MRP of {product} : ₹{mrp}")
-
-        if qty <= qty_avl:
-            log_activity('NO ERROR - SUFFICIENT STOCK AVAILABLE')
-
-            # Calculate pre-tax amount
-            base_amount = mrp * qty
-            discounted_amount = base_amount * (1 - discount_rate)
-            
-            # --- Fetch GST Rates for Sale Amount Calculation ---
-            mycursor.execute("SELECT State, IGST, CGST, SGST FROM SETTINGS LIMIT 1")
-            gst_settings = mycursor.fetchone()
-            company_state = gst_settings['State'].lower()
-            igst_rate = gst_settings['IGST']
-            cgst_rate = gst_settings['CGST']
-            sgst_rate = gst_settings['SGST']
-            
-            # Simple check for inter/intra state for Sale_Amount calculation
-            # Note: A more robust system would check the state of the *customer* address vs company state.
-            # Here, we use the simple state match as implemented in gen_bill (company_state vs customer_address content).
-            if company_state in address.lower():
-                # Intra-state: CGST + SGST
-                total_tax_rate = cgst_rate + sgst_rate
-            else:
-                # Inter-state: IGST
-                total_tax_rate = igst_rate
-            
-            sale_amt = discounted_amount * (1 + total_tax_rate) # Calculate sale amount with GST
-            sale_amt = round(sale_amt, 2)
-
-            # Record the sale in the SALES table
-            mycursor.execute("INSERT INTO SALES (Customer_Name, Products, QTY, Sale_Amount, Date_Of_Sale) VALUES (%s, %s, %s, %s, %s)", 
-                             (custm_name, product, qty, sale_amt, today))
-            mycon.commit()
-            log_activity('NO ERROR - SALE RECORDED IN DATABASE with values : ' + f"Customer_Name : {custm_name}, Products : {product}, QTY : {qty}, Sale_Amount : ₹{sale_amt}, Date_Of_Sale : {today}")
-
-            # Retrieve the BillNo for the newly created sale
-            mycursor.execute(f"SELECT BillNo FROM SALES WHERE Customer_Name = %s AND Products = %s AND QTY = %s AND Sale_Amount = %s AND Date_Of_Sale = %s",
-                             (custm_name, product, qty, sale_amt, today))
-            bill_no = mycursor.fetchone()['BillNo']
-            log_activity(f"BillNo for the sale recorded : {bill_no}")
-
-            # Record profit
-            profit = (discounted_amount / qty - cost_price) * qty
-            profit = round(profit, 2)
-            mycursor.execute("INSERT INTO PROFIT_AND_LOSS (BillNo, Product_Name, Net_Profit) VALUES (%s, %s, %s)", (bill_no, product, profit))
-            log_activity(f"Recorded Net Profit of ₹{profit} for BillNo : {bill_no}")
-            mycon.commit()
-
-            gen_bill(bill_no, custm_name, address, product, qty, discount_rate)  # Generate PDF invoice
-            log_activity("GST Invoice generated successfully for BillNo : " + str(bill_no))
-            filename = f"GST_Invoice_{custm_name}_{bill_no}.pdf"
-
-            # Open in default PDF viewer
-            # Need to ensure the file path is correct for the OS
-            filepath = os.path.abspath(filename)
-            webbrowser.open(f"file:///{filepath}") 
-
-            record_shipment_cli(bill_no, address, status)      # Record shipment info
-            log_activity(f"Recorded Shipment info for BillNo : {bill_no}")
-
-            # Update inventory
-            mycursor.execute("UPDATE PRODUCTS SET Quantity = Quantity - %s WHERE Product_Name = %s",(qty, product))
-            mycon.commit()
-            log_activity(f"Inventory updated: {qty} units of '{product}' deducted.")
-        else:
-            log_activity("\nPurchase quantity exceeds available stock!")
-            log_activity(f"Available quantity for '{product}': {qty_avl}")
-
-    except Exception as e:
-        log_activity(f"An error occurred in record_sale: {e}")
-
-def record_shipment_cli(billno, address, status):
-    """Internal function to record shipment data."""
-    try:
-        mycursor.execute("INSERT INTO TRANSPORT (BillNo, Address, Status) VALUES (%s, %s, %s)",(billno, address, status))
-        mycon.commit()
-        log_activity("Recorded Shipment info for the order with BillNo : " + str(billno))
-
-    except Exception as e:
-        log_activity(f"An error occurred while recording shipment: {e}")
-
-def delete_sale_cli():
-    """CLI function to delete a sale record by BillNo."""
-    try :
-        bill = input("Enter the BillNo of the sale record to be deleted : ")
-        # Deleting from SALES will automatically delete from TRANSPORT due to ON DELETE CASCADE
-        mycursor.execute("DELETE FROM SALES WHERE BillNo = %s", (bill,))
-        # Also need to delete from PROFIT_AND_LOSS as it has BillNo but no cascade constraint defined in this script
-        mycursor.execute("DELETE FROM PROFIT_AND_LOSS WHERE BillNo = %s", (bill,))
-        mycon.commit()
-        log_activity(f"Sale record with BillNo : {bill} successfully deleted from the table and associated tables.")
-        
-    except Exception as e:
-        log_activity(f"An error occurred: {e}")
-
-def search_sale_cli():
-    """CLI function to search sale by BillNo."""
-    try:
-        billno = input("Enter the BillNo of the sale record to be searched : ")
-        mycursor.execute("SELECT * FROM SALES WHERE BillNo = %s", (billno,))
-        table = from_db_cursor(mycursor)
-        if not table._rows :
-            log_activity(f"No records found for BillNo : {billno}")
-        else :
-            log_activity(table)
-            log_activity(f"Displayed record for BillNo : {billno}")
-
-    except Exception as e:
-        log_activity(f"An error occurred: {e}")
-
-def sale_info_cli():
-    """CLI function to view all sales info."""
-    try:
-        mycursor.execute("SELECT * FROM SALES")
-        table = from_db_cursor(mycursor)
-        if not table._rows :
-            log_activity("No Sales Records Found")
-        else :
-            log_activity(table)
-            log_activity("Displayed all sales records")
-
-    except Exception as e:
-        log_activity(f"An error occurred: {e}")
-    
-def shipping_info_cli():
-    """CLI function to view all shipment info."""
-    try:
-        mycursor.execute("SELECT * FROM TRANSPORT")
-        table = from_db_cursor(mycursor)
-        if not table._rows :
-            log_activity("No Shipment Records Found")
-        else :
-            log_activity(table)
-            log_activity("Displayed all shipment records")
-
-    except Exception as e:
-        log_activity(f"An error occurred: {e}")
-
-def user_info_cli():
-    """CLI function to view all users info."""
-    try:
-        # Note: Added 'username' to the query to match updated schema
-        mycursor.execute("SELECT UserID, Name, Department, Salary, username FROM USER")
-        table = from_db_cursor(mycursor)
-        log_activity(table)
-        log_activity("Displayed all user records")
-
-    except Exception as e:
-        log_activity(f"An error occurred: {e}")
-
-def product_info_cli():
-    """CLI function to view all products info."""
-    try:
-        mycursor.execute("SELECT * FROM PRODUCTS")
-        table = from_db_cursor(mycursor)
-        log_activity(table)
-        log_activity("Displayed all product records")
-
-    except Exception as e:
-        log_activity(f"An error occurred: {e}")
-
-def search_ship_cli():
-    """CLI function to search shipment by ShipmentID."""
-    shipID = input("Enter the ShipmentID to be searched : ")
-
-    try:
-        mycursor.execute("SELECT * FROM TRANSPORT WHERE ShipmentID = %s", (shipID,))
-        table = from_db_cursor(mycursor)
-        if not table._rows:
-            log_activity(f"No records found for the ShipmentID : {shipID}")
-        else:
-            log_activity(f"Found Record for the ShipmentID : {shipID}")
-            log_activity(table)
-            log_activity(f"Displayed record for ShipmentID : {shipID}")
-
-    except Exception as e:
-        log_activity(f"An error occurred: {e}")
+# ----------------- Company Settings Management --------------------
 
 def set_settings_cli(): 
+
     """CLI function to set the company details (to be used once)."""
     
     try:
         Company_Name = input("Enter Company Name : ")
-        Company_ID = input("Enter Company ID : ") # Changed to string input as per DB schema
+        Company_ID = input("Enter Company ID : ")
         GST_No = input("Enter GST Registration Number : ")
         Company_Address = input("Enter Company Address : ")
         state = input("Enter GST Registration State : ")
@@ -509,23 +161,384 @@ def set_settings_cli():
     except Exception as e:
         log_activity(f"An error occurred during setting settings: {e}")
 
+# --------------- User Management (CLI) ------------------
 
-def export_table_to_csv(table_name):
-    """Exports data from a specified database table to a CSV file."""
-    try:
-        query = f"SELECT * FROM {table_name}"
-        # pandas.read_sql is used to fetch data directly into a DataFrame
-        df = pd.read_sql(query, mycon) 
-        filename = f"{table_name}_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-        df.to_csv(filename, index=False)
-        # Get the absolute path for clean logging
-        filepath = os.path.abspath(filename)
-        log_activity(f"Exported {table_name} data to {filepath}")
-        return filename
+def add_user_cli():
+
+    """CLI function to add a new user to the USER table."""
+
+    try : 
+
+        name = input("Enter Name : ")
+        username_login = input("Enter Username : ")
+        dept = input("Enter Department : ")
+        sal = int(input("Enter Salary : "))
+    
+        mycursor.execute("INSERT INTO USER (Name, username, Department, Salary) VALUES (%s, %s, %s, %s)", (name, username_login, dept, sal))
+        mycon.commit()
+        log_activity(f"User '{name}' successfully added to the table with username '{username_login}'")
+
+    except ms.IntegrityError:
+        log_activity(f"Username : {username_login} already exists. Please use a unique username")
+
+    except ValueError: 
+        log_activity("Invalid input. Please enter the correct data types for salary.")
+
     except Exception as e:
-        log_activity(f"Error exporting data: {e}")
-        return None
+        log_activity(f"An error occurred: {e}")
+
+def remove_user_cli():
+
+    """CLI function to delete a user by UserID."""
+
+    try :
+        delete_id = input("Enter UserID of the entry to be deleted : ")
+        mycursor.execute("DELETE FROM USER WHERE UserID = %s", (delete_id,))
+        mycon.commit()
+        if mycursor.rowcount == 0:
+            log_activity(f"No user found with UserID: {delete_id}. No entry deleted.")
+        else:
+            log_activity(f"Entry successfully deleted from the table for userID : {delete_id}")
         
+    except Exception as e:
+        log_activity(f"An error occurred: {e}")
+
+def search_user_cli():
+
+    """CLI function to search and display a user by UserID."""
+
+    try : 
+        user = input("Enter UserID of the user to be found: ")
+        mycursor.execute("select * from user where UserID = %s", (user,))
+        table = from_db_cursor(mycursor)
+        if not table._rows :
+            log_activity(f"No records found for UserID : {user}")
+        else :
+            log_activity(table)
+
+    except Exception as e:
+        log_activity(f"An error occurred: {e}")
+
+def update_user_cli():
+
+    """CLI function to update a specific column for a user by UserID."""
+    
+    try :
+        column = input("Enter Column where the value is to be changed: ")
+        value1 = input("Enter UserID of the entry to be updated: ")
+        value2 = input("Enter Updated value: ")
+        mycursor.execute("UPDATE USER SET %s = %s WHERE UserID = %s", (column, value2, value1))
+        mycon.commit()
+        log_activity(f"Value of column : {column} updated to {value2} successfully updated for UserID : {value1}")
+
+    except Exception as e:
+        log_activity(f"An error occurred: {e}")
+
+# --------------- Product Management (CLI) ----------------
+
+def add_stock_cli():
+
+    """CLI function to add a new product to the PRODUCTS table."""
+
+    try : 
+        name = input("Enter product name: ")
+        cost = float(input("Enter cost price of product: "))
+        mrp = float(input("Enter MRP of product: "))
+        qty = int(input("Enter quantity of product: "))
+
+        mycursor.execute("INSERT INTO PRODUCTS (Product_Name, Cost_Price, MRP, Quantity) VALUES (%s, %s, %s, %s)", (name, cost, mrp, qty))
+        mycon.commit()
+        log_activity(f"Record successfully added for Product Name : {name}, Cost Price : {cost}, MRP : {mrp}, Quantity : {qty}")
+
+    except ms.IntegrityError as e:
+        log_activity(f"An Integrity Error occurred: {e}")
+
+    except ValueError: 
+        log_activity("Invalid input. Please enter the correct data types (numbers for cost, mrp, qty).")
+
+    except Exception as e:
+        log_activity(f"An error occurred: {e}")
+
+def remove_stock_cli():
+
+    """CLI function to delete a product by ProductID."""
+
+    try :
+        value = input("Enter the ProductID of the entry to be deleted: ")
+        mycursor.execute("delete from Products where ProductID = %s",(value,))
+        mycon.commit()
+        if mycursor.rowcount == 0:
+            log_activity(f"No product found with ProductID: {value}. No entry deleted.")
+        else:
+            log_activity(f"ProductID : {value} successfully deleted from the table Products")
+
+    except Exception as e:
+        log_activity(f"An error occurred: {e}")
+
+def search_stock_cli():
+    """CLI function to search and display a product by ProductID."""
+    try:
+        product = input("Enter the ProductID of the entry to be dislayed: ")
+        mycursor.execute("SELECT * FROM Products WHERE ProductID = %s", (product,))
+        table = from_db_cursor(mycursor)
+        if not table._rows :
+            log_activity(f"No records found for ProductID: {product}")
+        else :
+            log_activity(table)
+
+    except Exception as e:
+        log_activity(f"An error occurred: {e}")
+
+def update_stock_cli():
+
+    """CLI function to update a specific column for a product by ProductID."""
+
+    try :
+        column = input("Enter Column where the value is to be changed: ")
+        value1 = input("Enter ProductID of the entry to be updated: ")
+        value2 = input("Enter Updated value: ")
+        mycursor.execute("update Products set %s = %s where ProductID = %s", (column, value2, value1))
+        mycon.commit()
+        log_activity(f"Value of {column} updated to {value2} for the ProductID : {value1} successfully")
+
+    except Exception as e:
+        log_activity(f"An error occurred: {e}")
+
+# --------------- Sales Related Functions ----------------
+
+def record_sale(custm_name, address, product, qty, today, status, discount = 0.0):
+
+    """Record a sale, update inventory, generate bill, and record shipment."""
+    
+    discount_rate = discount / 100.0 if discount > 0.0 else 0.0
+
+    try:
+        mycursor.execute("SELECT MRP, Cost_Price, Quantity FROM PRODUCTS WHERE Product_Name = %s", (product,))
+        output = mycursor.fetchall()
+        
+        if not output:
+            log_activity(f"\nProduct '{product}' not found in inventory.")
+            return 
+        
+        mrp = float(output[0]['MRP'])
+        qty_avl = int(output[0]['Quantity'])
+        cost_price = float(output[0]['Cost_Price'])
+
+        log_activity(f"MRP of {product} : ₹{mrp}")
+
+        if qty <= qty_avl:
+            log_activity('NO ERROR - SUFFICIENT STOCK AVAILABLE')
+
+            base_amount = mrp * qty
+            discounted_amount = base_amount * (1 - discount_rate)
+            
+            # --- Fetch GST Rates for Sale Amount Calculation ---
+
+            mycursor.execute("SELECT State, IGST, CGST, SGST FROM SETTINGS LIMIT 1")
+            gst_settings = mycursor.fetchone()
+            company_state = gst_settings['State'].lower()
+            igst_rate = gst_settings['IGST']
+            cgst_rate = gst_settings['CGST']
+            sgst_rate = gst_settings['SGST']
+            
+            # Simple check for inter/intra state for Sale_Amount calculation
+
+            if company_state in address.lower():
+                # Intra-state: CGST + SGST
+                total_tax_rate = cgst_rate + sgst_rate
+            else:
+                # Inter-state: IGST
+                total_tax_rate = igst_rate
+            
+            sale_amt = discounted_amount * (1 + total_tax_rate) # Calculate sale amount with GST
+            sale_amt = round(sale_amt, 2)
+
+            # Record the sale in the SALES table
+            mycursor.execute("INSERT INTO SALES (Customer_Name, Products, QTY, Sale_Amount, Date_Of_Sale) VALUES (%s, %s, %s, %s, %s)", 
+                             (custm_name, product, qty, sale_amt, today))
+            mycon.commit()
+            log_activity('SALE RECORDED IN DATABASE with values : ' + f"Customer_Name : {custm_name}, Products : {product}, QTY : {qty}, Sale_Amount : ₹{sale_amt}, Date_Of_Sale : {today}")
+
+            # Retrieve the BillNo for the newly created sale
+            mycursor.execute(f"SELECT BillNo FROM SALES WHERE Customer_Name = %s AND Products = %s AND QTY = %s AND Sale_Amount = %s AND Date_Of_Sale = %s",
+                             (custm_name, product, qty, sale_amt, today))
+            bill_no = mycursor.fetchone()['BillNo']
+            log_activity(f"BillNo for the sale recorded : {bill_no}")
+
+            # Record profit
+            profit = (discounted_amount / qty - cost_price) * qty
+            profit = round(profit, 2)
+            mycursor.execute("INSERT INTO PROFIT_AND_LOSS (BillNo, Product_Name, Net_Profit) VALUES (%s, %s, %s)", (bill_no, product, profit))
+            log_activity(f"Recorded Net Profit of ₹{profit} for BillNo : {bill_no}")
+            mycon.commit()
+
+            # Generate PDF invoice
+            gen_bill(bill_no, custm_name, address, product, qty, discount_rate)
+            log_activity("GST Invoice generated successfully for BillNo : " + str(bill_no))
+            filename = f"GST_Invoice_{custm_name}_{bill_no}.pdf"
+
+            # Open in default PDF viewer
+            filepath = os.path.abspath(filename)
+            webbrowser.open(f"file:///{filepath}") 
+
+            # Record shipment info
+            record_shipment_cli(bill_no, address, status)     
+            log_activity(f"Recorded Shipment info for BillNo : {bill_no}")
+
+            # Update inventory
+            mycursor.execute("UPDATE PRODUCTS SET Quantity = Quantity - %s WHERE Product_Name = %s",(qty, product))
+            mycon.commit()
+            log_activity(f"Inventory updated: {qty} units of '{product}' deducted.")
+
+        else:
+            log_activity("\nPurchase quantity exceeds available stock!")
+            log_activity(f"Available quantity for '{product}': {qty_avl}")
+
+    except Exception as e:
+        log_activity(f"An error occurred in record_sale: {e}")
+
+def remove_sale_cli():
+
+    """CLI function to delete a sale record by BillNo."""
+
+    try :
+        bill = input("Enter the BillNo of the sale record to be deleted : ")
+        mycursor.execute("DELETE FROM SALES WHERE BillNo = %s", (bill,))
+        mycursor.execute("DELETE FROM PROFIT_AND_LOSS WHERE BillNo = %s", (bill,))
+        mycon.commit()
+        log_activity(f"Sale record with BillNo : {bill} successfully deleted from the table and associated tables.")
+        
+    except Exception as e:
+        log_activity(f"An error occurred: {e}")
+
+def search_sale_cli():
+
+    """CLI function to search sale by BillNo."""
+
+    try:
+        billno = input("Enter the BillNo of the sale record to be searched : ")
+        mycursor.execute("SELECT * FROM SALES WHERE BillNo = %s", (billno,))
+        table = from_db_cursor(mycursor)
+        if not table._rows :
+            log_activity(f"No records found for BillNo : {billno}")
+        else :
+            log_activity(table)
+            log_activity(f"Displayed record for BillNo : {billno}")
+
+    except Exception as e:
+        log_activity(f"An error occurred: {e}")
+
+# ------------- Transport Managment (CLI) ----------------
+
+def record_shipment_cli(billno, address, status):
+
+    """ This function is auto handled by the record_sale() function"""
+
+    try:
+        mycursor.execute("INSERT INTO TRANSPORT (BillNo, Address, Status) VALUES (%s, %s, %s)",(billno, address, status))
+        mycon.commit()
+        log_activity("Recorded Shipment info for the order with BillNo : " + str(billno))
+
+    except Exception as e:
+        log_activity(f"An error occurred while recording shipment: {e}")
+
+def search_ship_cli():
+
+    """CLI function to search shipment by ShipmentID."""
+
+    shipID = input("Enter the ShipmentID to be searched : ")
+
+    try:
+        mycursor.execute("SELECT * FROM TRANSPORT WHERE ShipmentID = %s", (shipID,))
+        table = from_db_cursor(mycursor)
+        if not table._rows:
+            log_activity(f"No records found for the ShipmentID : {shipID}")
+        else:
+            log_activity(f"Found Record for the ShipmentID : {shipID}")
+            log_activity(table)
+            log_activity(f"Displayed record for ShipmentID : {shipID}")
+
+    except Exception as e:
+        log_activity(f"An error occurred: {e}")
+
+def update_shipment_status_cli():
+    """CLI function to update shipment status by ShipmentID."""
+    try:
+        ship_id = int(input("Enter ShipmentID to update status: "))
+        new_status = input("Enter new status (e.g., In Transit, Delivered): ")
+        mycursor.execute("UPDATE TRANSPORT SET Status = %s WHERE ShipmentID = %s", (new_status, ship_id))
+        mycon.commit()
+        log_activity("Shipment status updated successfully for ShipmentID : " + str(ship_id))
+
+    except ValueError:
+        log_activity("Invalid input. Please enter the correct data types (integer for ShipmentID).")
+
+    except Exception as e:
+        log_activity(f"An error occurred: {e}")
+
+# --------- Informational Functions (CLI) --------------
+
+def shipping_info_cli():
+
+    """CLI function to view all shipment info."""
+
+    try:
+        mycursor.execute("SELECT * FROM TRANSPORT")
+        table = from_db_cursor(mycursor)
+        if not table._rows :
+            log_activity("No Shipment Records Found")
+        else :
+            log_activity(table)
+            log_activity("Displayed all shipment records")
+
+    except Exception as e:
+        log_activity(f"An error occurred: {e}")
+
+def user_info_cli():
+
+    """CLI function to view all users info."""
+
+    try:
+        # Note: Added 'username' to the query to match updated schema
+        mycursor.execute("SELECT UserID, Name, Department, Salary, username FROM USER")
+        table = from_db_cursor(mycursor)
+        log_activity(table)
+        log_activity("Displayed all user records")
+
+    except Exception as e:
+        log_activity(f"An error occurred: {e}")
+
+def product_info_cli():
+
+    """CLI function to view all products info."""
+
+    try:
+        mycursor.execute("SELECT * FROM PRODUCTS")
+        table = from_db_cursor(mycursor)
+        log_activity(table)
+        log_activity("Displayed all product records")
+
+    except Exception as e:
+        log_activity(f"An error occurred: {e}")
+
+def sale_info_cli():
+
+    """CLI function to view all sales info."""
+
+    try:
+        mycursor.execute("SELECT * FROM SALES")
+        table = from_db_cursor(mycursor)
+        if not table._rows :
+            log_activity("No Sales Records Found")
+        else :
+            log_activity(table)
+            log_activity("Displayed all sales records")
+
+    except Exception as e:
+        log_activity(f"An error occurred: {e}")
+
+# --------------- GST Invoice and UPI Payment QR Code Generation ------------ 
+
 def gen_bill(bill_no, customer_name, customer_address, product, qty, discount_rate = 0.0):
     """Generate a GST invoice PDF for a sale."""
     
@@ -766,59 +779,16 @@ def gen_bill(bill_no, customer_name, customer_address, product, qty, discount_ra
 
     except Exception as e:
         log_activity(f"Error generating invoice: {e}")
-
-def remove_sale_cli():
-    """CLI function to delete a sale record by BillNo."""
-    try:
-        bill = input("Enter the BillNo of the sale record to be deleted : ")
-        # Deleting from SALES will cascade to TRANSPORT. Need to delete from PROFIT_AND_LOSS manually.
-        mycursor.execute("DELETE FROM SALES WHERE BillNo = %s", (bill,))
-        mycursor.execute("DELETE FROM PROFIT_AND_LOSS WHERE BillNo = %s", (bill,))
-        mycon.commit()
-        log_activity("Sale record and associated profit/shipment successfully deleted from the table for BillNo : " + str(bill))
-
-    except Exception as e:
-        log_activity(f"An error occurred: {e}")
     
-def update_shipment_status_cli():
-    """CLI function to update shipment status by ShipmentID."""
-    try:
-        ship_id = int(input("Enter ShipmentID to update status: "))
-        new_status = input("Enter new status (e.g., In Transit, Delivered): ")
-        mycursor.execute("UPDATE TRANSPORT SET Status = %s WHERE ShipmentID = %s", (new_status, ship_id))
-        mycon.commit()
-        log_activity("Shipment status updated successfully for ShipmentID : " + str(ship_id))
-
-    except ValueError:
-        log_activity("Invalid input. Please enter the correct data types (integer for ShipmentID).")
-
-    except Exception as e:
-        log_activity(f"An error occurred: {e}")
-
-# ---------- MANDATORY CHECKS BEFORE MAIN MENU ----------
-
-def low_stock_alert_cli():
-    """CLI function to alert for products with low stock (less than 10 units)."""
-    mycursor.execute("SELECT Product_Name, Quantity FROM PRODUCTS WHERE Quantity < 10")
-    # FIX: Using dictionary access instead of tuple indexing
-    low_stock = mycursor.fetchall() 
-    if low_stock:
-        log_activity("\n Low Stock Alert:")
-        for p in low_stock:
-            # FIX: Use column names for dictionary cursor output
-            log_activity(f"   - {p['Product_Name']}: {p['Quantity']} units left") 
-        print()
-    else:
-        log_activity("No low stock items found.")
+# ---------- ! MANDATORY CHECKS BEFORE MAIN MENU ! ----------
 
 def checks_cli():
+
     """Ensure database and tables exist, and prompt for initial setup if needed."""
     
     # Must run before any settings checks
     create_init_db()
 
-    low_stock_alert_cli()
-    
     # Check settings
     mycursor.execute("SELECT COUNT(*) FROM SETTINGS")
     if mycursor.fetchone()['COUNT(*)'] == 0:
@@ -828,10 +798,9 @@ def checks_cli():
         global company_name
         company_name = check_settings_filled()
 
-
     mycursor.execute("SELECT CompanyName FROM SETTINGS LIMIT 1")
     settings = mycursor.fetchone()
-    # Check if settings were fetched (should be if set_settings_cli was called)
+
     if settings:
         print("="*70)
         print(f"\nWelcome to {settings['CompanyName']} Warehouse Management System (WMS)\n")
@@ -845,7 +814,6 @@ def checks_cli():
     mycursor.execute("SELECT COUNT(*) FROM USER")
     if mycursor.fetchone()['COUNT(*)'] == 0:
         print("No users found in the system. Please add a user to proceed.\n")
-        # FIX: Call the wrapper function or the CLI function directly
         add_user_cli() 
 
     mycursor.execute("SELECT COUNT(*) FROM PRODUCTS")
@@ -853,11 +821,35 @@ def checks_cli():
         print("No products found in the inventory. Please add products to proceed.\n")
         add_stock_cli()
 
+def check_settings_filled():
+
+    """Checks if company settings are present and returns the company name or an error message."""
+
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute("SELECT COUNT(*) AS count FROM SETTINGS")
+    result = cursor.fetchone()
+    
+    if result and result['count'] == 0:
+        return "ADD COMPANY NAME IN SETTINGS"
+    
+    cursor.execute("SELECT CompanyName from SETTINGS LIMIT 1")
+    company_name = cursor.fetchone()
+    return company_name['CompanyName']
+
+# ------------------- Section Divider -------------------
+
 def print_divider():
     print("\n" + "="*60)
 
+# ------------------------------------------------------------------------------------------------------------ #
+
+################################################################################################################
+# ===================================== WAREHOUSE MANAGMENT SOFTWARE (CLI) =================================== #
+################################################################################################################
+
+# ---------- Main menu (CLI) ----------
+
 def main_menu():
-    """Main CLI menu loop."""
 
     while True:
         print("Main Menu:")
@@ -866,8 +858,7 @@ def main_menu():
         print("3. Sales Management")
         print("4. Shipment Management")
         print("5. Database Management")
-        # print("6. Analytics Dashboard") # CLI Analytics not fully implemented/used
-        print("6. Exit") # Changed exit from 7 to 6 after removing analytics option
+        print("6. Exit")
 
         try :
             choice = input("Enter your choice (1-6): ")
@@ -877,7 +868,9 @@ def main_menu():
             break
 
         if choice == '1':
+
             # --- USER MANAGEMENT ---
+
             while True:
                 print("\nUser Management:")
                 print("a. Add User")
@@ -890,7 +883,6 @@ def main_menu():
                 ch = input("Enter your choice: ").lower()
 
                 if ch == 'a':
-                    # FIX: Call the correct function
                     add_user_cli()
                     print_divider()
 
@@ -925,7 +917,9 @@ def main_menu():
                     break
 
         elif choice == '2':
+
             # --- PRODUCT MANAGEMENT ---
+
             while True:
                 print("\nStock Management:")
                 print("a. Add Product")
@@ -933,8 +927,7 @@ def main_menu():
                 print("c. Search Product")
                 print("d. Update Product Info")
                 print("e. View All Products")
-                print("f. Low Stock Alert")
-                print("g. Back to Main Menu")
+                print("f. Back to Main Menu")
 
                 try : 
                     ch = input("Enter your choice: ").lower()
@@ -963,11 +956,8 @@ def main_menu():
                     print_divider()
                 
                 elif ch == 'f':
-                    low_stock_alert_cli()
-                    print_divider()
-                
-                elif ch == 'g':
                     break
+                    print_divider()
 
                 else:
                     print("Invalid Choice. Please try again.")
@@ -980,7 +970,9 @@ def main_menu():
                     break
 
         elif choice == '3':
+
             # --- SALES MANAGEMENT ---
+
             while True:
                 print("\nSales Management:")
                 print("a. Record Sale")
@@ -1013,7 +1005,7 @@ def main_menu():
                     print_divider()
 
                 elif ch == 'b':
-                    delete_sale_cli()
+                    remove_sale_cli()
                     print_divider()
                 
                 elif ch == 'c':
@@ -1037,7 +1029,9 @@ def main_menu():
                     break
 
         elif choice == '4':
+
             # --- SHIPMENT MANAGEMENT ---
+
             while True:
                 print("\nShipment Management:")
                 print("a. View all Shipments")
@@ -1046,9 +1040,9 @@ def main_menu():
                 print("d. Delete Shipment Record (Deletes Sale/Profit too)") # Clarified the action
                 print("e. Back to Main Menu")
 
-
                 try : 
                     ch = input("Enter your choice: ").lower()
+
                 except KeyboardInterrupt:
                     print("\nExiting the program. Goodbye!")
                     sys.exit(0)
@@ -1066,7 +1060,6 @@ def main_menu():
                     print_divider()
                 
                 elif ch == 'd':
-                    # Deleting sale will also delete shipment due to foreign key constraint
                     remove_sale_cli()
                     print_divider()
                 
@@ -1084,7 +1077,9 @@ def main_menu():
                     break
 
         elif choice == '5':
+
             # ---- DATABASE MANAGEMENT ---- 
+
             while True:
                 print("\nDatabase Management:")
                 print("a. Delete Entire Database (All Tables)")
@@ -1093,6 +1088,7 @@ def main_menu():
 
                 try : 
                     ch = input("Enter your choice: ").lower()
+
                 except KeyboardInterrupt:
                     print("\nExiting the program. Goodbye!")
                     sys.exit(0)
@@ -1125,34 +1121,39 @@ def main_menu():
             print("Exiting the program. Goodbye!")
             print("=" * 60)
             break
-        
-        # elif choice == '6': # Original '6. Analytics Dashboard' - currently removed
-        #    print("Analytics Dashboard not yet implemented in CLI.")
-        #    print_divider()
-        #    continue
 
         else:
             print("Invalid choice. Please try again.")
             print_divider()
 
-# ---------- FLASK APP (GUI) ----------
+# ------------------------------------------------------------------------------------------------------------ #
+
+################################################################################################################
+# ===================================== WAREHOUSE MANAGMENT SOFTWARE (GUI) =================================== #
+################################################################################################################
+
+# ---------- FLASK APP (GUI) ----------------
 
 app = Flask(__name__)
 app.secret_key = "egweg4h4r4h654re65j465er562rb11rg6465w" 
-
+bcrypt = Bcrypt(app)
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
+# ---------- User Registration ----------
+
 @app.route('/register', methods=["GET", "POST"])
 def register():
+
     """Route for user registration (for login table)."""
-    # FIX: Use the global company_name
+
     global company_name
     if request.method == "POST":
+        name = request.form.get('name')
         usrname = request.form.get('username').strip()
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
-        department = "Default" # Default department for new registrations (can be changed later)
+        department = "Employee"
 
         if not usrname or not password or not confirm_password:
             return render_template("register.html", error="Please fill in all fields", company_name=company_name)
@@ -1165,11 +1166,11 @@ def register():
         if existing_user:
             return render_template("register.html", error="Username already exists. Try a different one.", company_name=company_name)
 
-        hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        hashed_pw = bcrypt.generate_password_hash(password).decode('utf-8')
         
         # Insert a placeholder into the USER table first to get a UserID
-        mycursor.execute("INSERT INTO USER (Name, username, Department, Salary) VALUES (%s, %s, %s, %s)", 
-                         (usrname, usrname, department, 0))
+        mycursor.execute("INSERT INTO USER (Name, Username, Department, Salary) VALUES (%s, %s, %s, %s)", 
+                         (name, usrname, department, 0))
         mycon.commit()
         
         # Retrieve the generated UserID
@@ -1186,6 +1187,8 @@ def register():
 
     return render_template("register.html", company_name=company_name)
 
+# ------------ User Login -------------
+
 @app.route('/login', methods=["GET", "POST"])
 def login():
     """Route for user login."""
@@ -1201,7 +1204,7 @@ def login():
         if record:
             stored_hash = record['Password'].encode('utf-8') if isinstance(record['Password'], str) else record['Password']
             
-            if bcrypt.checkpw(password.encode('utf-8'), stored_hash):
+            if usrname and bcrypt.check_password_hash(record['Password'], password):
                 session['username'] = usrname
                 session['user_id'] = record['UserID'] # Store UserID in session
                 session['department'] = record['Department'] # Store Department in session
@@ -1212,6 +1215,8 @@ def login():
             return render_template("login.html", error="User not found", company_name=company_name)
 
     return render_template("login.html", company_name=company_name)
+
+# ------------ User Logout --------------
 
 @app.route('/logout')
 def logout():
@@ -1230,16 +1235,19 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# ---------- Dashboard (Home) ----------
+
 @app.route('/')
 @login_required
 def home():
+
     """Home dashboard route."""
+
     global company_name
-    create_init_db()
     check = check_settings_filled()
+
     if check == "ADD COMPANY NAME IN SETTINGS":
-        # Redirect to settings if company name is not set
-        flash("Please complete your company settings first.", "warning")
+        log_activity("Settings is not setup")
         return redirect(url_for('settings')) 
     
     # Update global company_name after check
@@ -1259,6 +1267,8 @@ def home():
     profit = mycursor.fetchone()['SUM(Net_Profit)'] or 0
     return render_template('index.html', no_of_users=no_of_users, no_of_items=no_of_items, revenue=revenue, no_of_ships=no_of_ships, company_name=company_name, db_data=tables,no_of_tables=len(tables), profit=profit, username=session.get('username'))
 
+# ---------- Sales Management ----------
+
 @app.route('/sales', methods=['GET', 'POST'])
 @login_required
 def sales():
@@ -1274,7 +1284,9 @@ def sales():
 @app.route('/add_order', methods=['GET', 'POST'])
 @login_required
 def add_order():
+
     """Route to add a new sale order."""
+
     global company_name
     today = date.today().strftime("%Y-%m-%d")
     mycursor.execute("SELECT Product_Name FROM PRODUCTS")
@@ -1317,6 +1329,102 @@ def add_order():
 
     # For GET request
     return render_template('add_order.html', products=products, success=success, company_name=company_name, company_logo="/static/logo.png", today=today, username=session.get('username'))
+
+@app.route('/view_invoice/<int:bill_no>')
+@login_required
+def view_invoice(bill_no):
+    """Open the saved PDF invoice for a specific BillNo."""
+    try:
+        # Fetch customer name for filename
+        mycursor.execute("SELECT Customer_Name FROM SALES WHERE BillNo = %s", (bill_no,))
+        record = mycursor.fetchone()
+
+        if not record:
+            flash("Invoice not found for this BillNo.", "error")
+            return redirect(url_for('sales'))
+
+        customer_name = record['Customer_Name']
+        filename = f"GST_Invoice_{customer_name}_{bill_no}.pdf"
+        file_path = os.path.abspath(filename)
+
+        if not os.path.exists(file_path):
+            flash("❌ PDF not found. It may not have been generated yet.", "error")
+            return redirect(url_for('sales'))
+
+        # Send the file to the browser to view/download
+        return send_file(file_path, as_attachment=False)
+
+    except Exception as e:
+        flash(f"Error opening invoice: {e}", "error")
+        return redirect(url_for('sales'))
+
+# ---------- User Profile Management ----------
+
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    """View and update the user profile."""
+    username = session.get('username')
+    if not username:
+        flash("Please log in to access your profile.", "warning")
+        return redirect(url_for('login'))
+
+    cursor = mycon.cursor(dictionary=True)
+
+    # 🔹 Fetch existing user data
+    cursor.execute("SELECT * FROM user WHERE username = %s", (username,))
+    user = cursor.fetchone()
+
+    if not user:
+        cursor.close()
+        flash("User not found.", "danger")
+        return redirect(url_for('home'))
+
+    # 🔹 Handle form submission
+    if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        password = request.form.get('password')
+
+        try:
+            # If password provided, hash it
+            if password.strip():
+                hashed_pw = bcrypt.generate_password_hash(password).decode('utf-8')
+                cursor.execute("""
+                    UPDATE users 
+                    SET username=%s, email=%s, phone=%s, password=%s 
+                    WHERE username=%s
+                """, (name, email, phone, hashed_pw, username))
+            else:
+                # Update only non-password fields
+                cursor.execute("""
+                    UPDATE users 
+                    SET username=%s, email=%s, phone=%s 
+                    WHERE username=%s
+                """, (name, email, phone, username))
+
+            mycon.commit()
+            session['username'] = name  # update session username if changed
+            flash("✅ Profile updated successfully!", "success")
+            return redirect(url_for('profile'))
+
+        except Exception as e:
+            mycon.rollback()
+            flash(f"❌ Error updating profile: {e}", "danger")
+
+    cursor.close()
+
+    # 🔹 Render profile template with existing user data
+    return render_template(
+        'profile.html',
+        company_name="Warehouse Management System",
+        user_name=user['username'],
+        user_email=user['email'],
+        user_phone=user.get('phone', '')
+    )
+
+# ---------- Company Settings Management ----------
 
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
@@ -1372,6 +1480,8 @@ def settings():
     else:
         # Initial setup page
         return render_template('settings_setup.html', company_name="WMS Setup", username=session.get('username'))
+    
+# ---------- Company Financial Management ----------
 
 @app.route("/profit_loss")
 @login_required
@@ -1394,6 +1504,19 @@ def p_and_l():
         username=session.get('username')
         )
 
+@app.route('/export_profit_loss')
+@login_required
+def export_profit_loss():
+    """Route to export profit and loss table to CSV."""
+    filename = export_table_to_csv("PROFIT_AND_LOSS")
+    if filename:
+        return send_file(filename, as_attachment=True)
+    else:
+        flash("❌ Error exporting profit & loss data.", "error")
+        return redirect(url_for('p_and_l'))
+    
+# ---------- Company Product Management ----------
+
 @app.route('/inventory')
 @login_required
 def inventory():
@@ -1401,10 +1524,9 @@ def inventory():
     global company_name
     mycursor.execute("SELECT * FROM PRODUCTS ORDER BY ProductID DESC")
     products_data = mycursor.fetchall()
-    count = len(products_data)
     total_products = sum(p['Quantity'] for p in products_data)
     total_value = int(sum((p['MRP'] or 0) * (p['Quantity'] or 0) for p in products_data)) # Handle potential None/null values
-    return render_template('inventory.html', company_name=company_name, products_data=products_data, count=count, total_products=total_products, total_value=total_value, username=session.get('username'))
+    return render_template('inventory.html', company_name=company_name, products_data=products_data, total_products=total_products, total_value=total_value, username=session.get('username'))
 
 @app.route("/add_product", methods=["POST"])
 @login_required
@@ -1474,16 +1596,30 @@ def edit_inventory():
         
     return redirect(url_for('inventory'))
 
-@app.route('/export_profit_loss')
+# ---------- Company Transport Management ----------
+
+@app.route('/shipments')
 @login_required
-def export_profit_loss():
-    """Route to export profit and loss table to CSV."""
-    filename = export_table_to_csv("PROFIT_AND_LOSS")
-    if filename:
-        return send_file(filename, as_attachment=True)
-    else:
-        flash("❌ Error exporting profit & loss data.", "error")
-        return redirect(url_for('p_and_l'))
+def shipments():
+
+    """Shipments tracking route."""
+
+    global company_name
+    mycursor.execute("SELECT * FROM TRANSPORT ORDER BY ShipmentID DESC")
+    shipments_data = mycursor.fetchall()
+    # Summary cards
+    total_shipments = len(shipments_data)
+    # FIX: Use .lower() for robust status comparison
+    pending = len([s for s in shipments_data if s['Status'] and s['Status'].lower() == 'pending'])
+    delivered = len([s for s in shipments_data if s['Status'] and s['Status'].lower() == 'delivered'])
+    
+    return render_template(
+        'shipments.html',
+        company_name=company_name,
+        shipments_data=shipments_data,
+        total_shipments=total_shipments,
+        pending=pending,
+        delivered=delivered, username=session.get('username'))
 
 @app.route('/edit_shipment', methods=['POST'])
 @login_required
@@ -1495,14 +1631,12 @@ def edit_shipment():
         address = request.form['address']
         status = request.form['status']
 
-        mycursor.execute("""
-            UPDATE TRANSPORT
-            SET BillNo=%s, Address=%s, Status=%s
-            WHERE ShipmentID=%s
-        """, (bill_no, address, status, shipment_id))
+        mycursor.execute("UPDATE TRANSPORT SET BillNo=%s, Address=%s, Status=%s WHERE ShipmentID=%s", (bill_no, address, status, shipment_id))
 
         mycon.commit()
+
         flash("✅ Shipment updated successfully!", "success")
+
     except Exception as e:
         flash(f"❌ Error updating shipment: {e}", "error")
         
@@ -1511,35 +1645,50 @@ def edit_shipment():
 @app.route('/delete_shipment/<int:id>')
 @login_required
 def delete_shipment(id):
-    """Route to delete a shipment by ShipmentID. (Also deletes Sale/Profit)."""
+
+    """Route to delete a shipment by ShipmentID"""
+
     try:
+
         mycursor.execute("SELECT BillNo FROM TRANSPORT WHERE ShipmentID=%s", (id,))
         billno_data = mycursor.fetchone()
-        
-        if billno_data:
-            billno = int(billno_data['BillNo'])
-            # Since TRANSPORT has ON DELETE CASCADE from SALES, we only need to delete the SALE.
-            # But the original code deletes TRANSPORT first, then PROFIT_AND_LOSS. Let's stick to the original intent:
-            # Delete from TRANSPORT (which might fail if other constraints exist, but here it's fine)
-            mycursor.execute("DELETE FROM TRANSPORT WHERE ShipmentID=%s", (id,))
-            # Manually delete from PROFIT_AND_LOSS
-            mycursor.execute("DELETE FROM PROFIT_AND_LOSS WHERE BillNo=%s", (billno,))
-            # Manually delete from SALES (if not auto-cascaded, safer to delete the parent)
-            mycursor.execute("DELETE FROM SALES WHERE BillNo=%s", (billno,))
-            mycon.commit()
-            flash("✅ Shipment, Sale, and Profit record deleted successfully!", "success")
-        else:
-            flash("❌ Error: Shipment not found.", "error")
+
+        if not billno_data:
+            flash(f"❌ No shipment found for ShipmentID {id}", "warning")
+            log_activity(f"No shipment found for ShipmentID {id}")
+            return redirect(url_for('shipments'))
+
+        billno = int(billno_data['BillNo'])
+
+        mycursor.execute("SELECT Products, Qty FROM SALES WHERE BillNo = %s", (billno,))
+        sales_items = mycursor.fetchall()
+
+        for item in sales_items:
+            product_name = item['Products']
+            qty_sold = item['Qty']
+            mycursor.execute("UPDATE PRODUCTS SET Quantity = Quantity + %s WHERE Product_Name = %s", (qty_sold, product_name))
+
+        mycursor.execute("DELETE FROM TRANSPORT WHERE ShipmentID=%s", (id,))
+        mycursor.execute("DELETE FROM PROFIT_AND_LOSS WHERE BillNo=%s", (billno,))
+        mycursor.execute("DELETE FROM SALES WHERE BillNo=%s", (billno,))
+
+        mycon.commit()
+        flash(f"✅ Shipment deleted for BillNo {billno}. Products restocked.", "info")
+        log_activity(f"Shipment deleted for BillNo {billno}. Products restocked.")
 
     except Exception as e:
-        flash(f"❌ Error deleting shipment: {e}", "error")
+        mycon.rollback()
+        flash(f"❌ Error deleting shipment {id}: {e}", "eror")
+        log_activity(f"Error deleting shipment {id}: {e}")
 
     return redirect(url_for('shipments'))
 
 @app.route('/export_shipments')
 @login_required
 def export_shipments():
+
     """Route to export transport table to CSV."""
+    
     filename = export_table_to_csv("TRANSPORT")
     if filename:
         return send_file(filename, as_attachment=True)
@@ -1547,6 +1696,18 @@ def export_shipments():
         flash("❌ Error exporting shipments data.", "error")
         return "Error exporting shipments", 500
     
+# ---------- Company User Management ----------
+
+@app.route('/users')
+@login_required
+def users_webpage():
+    """Users management route."""
+    global company_name
+    mycursor.execute("SELECT * FROM USER ORDER BY UserID DESC")
+    users_data = mycursor.fetchall()
+    count = len(users_data)
+    return render_template('users.html', company_name=company_name, users_data=users_data, count=count, username=session.get('username'))
+
 @app.route("/add_user", methods=["POST"])
 @login_required
 def add_user():
@@ -1571,37 +1732,6 @@ def add_user():
              flash(f"❌ Error adding user: {e}", "error")
              
         return redirect(url_for("users_webpage"))
-
-@app.route('/shipments')
-@login_required
-def shipments():
-    """Shipments tracking route."""
-    global company_name
-    mycursor.execute("SELECT * FROM TRANSPORT ORDER BY ShipmentID DESC")
-    shipments_data = mycursor.fetchall()
-    # Summary cards
-    total_shipments = len(shipments_data)
-    # FIX: Use .lower() for robust status comparison
-    pending = len([s for s in shipments_data if s['Status'] and s['Status'].lower() == 'pending'])
-    delivered = len([s for s in shipments_data if s['Status'] and s['Status'].lower() == 'delivered'])
-    
-    return render_template(
-        'shipments.html',
-        company_name=company_name,
-        shipments_data=shipments_data,
-        total_shipments=total_shipments,
-        pending=pending,
-        delivered=delivered, username=session.get('username'))
-
-@app.route('/users')
-@login_required
-def users_webpage():
-    """Users management route."""
-    global company_name
-    mycursor.execute("SELECT * FROM USER ORDER BY UserID DESC")
-    users_data = mycursor.fetchall()
-    count = len(users_data)
-    return render_template('users.html', company_name=company_name, users_data=users_data, count=count, username=session.get('username'))
 
 @app.route('/edit_users', methods=['POST'])
 @login_required
@@ -1647,6 +1777,39 @@ def delete_user(id):
     flash("✅ User and associated login record deleted successfully!", "success")
     return redirect(url_for('users_webpage'))
 
+@app.route('/view_logins')
+@login_required
+def view_logins():
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT 
+            u.UserID, u.Name, l.Username, l.Department
+        FROM LOGIN l
+        LEFT JOIN USER u ON l.UserID = u.UserID
+        ORDER BY u.UserID ASC
+    """)
+    data = cursor.fetchall()
+    cursor.close()
+    return render_template('view_logins.html', login_data=data, company_name=company_name)
+
+@app.route('/reset_password', methods=['POST'])
+@login_required
+def reset_password():
+    user_id = request.form['user_id']
+    new_password = request.form['new_password']
+
+    hashed_pw = bcrypt.generate_password_hash(new_password).decode('utf-8')
+
+    cursor = mycon.cursor()
+    cursor.execute("UPDATE LOGIN SET Password = %s WHERE UserID = %s", (hashed_pw, user_id))
+    mycon.commit()
+    cursor.close()
+
+    log_activity("Password reset successfully!", "success")
+    return redirect(url_for('login'))
+
+# ---------- Company Database Management ----------
+
 @app.route('/dbm', methods=['GET', 'POST'])
 @login_required
 def dbms():
@@ -1658,85 +1821,54 @@ def dbms():
     db_data = [{'table_name': t} for t in tables] 
     return render_template('dbms.html', db_data=db_data, company_name=company_name, no_of_tables=len(tables), username=session.get('username'))
 
-@app.route('/delete_table/<table_name>')
+@app.route('/reset_table/<table_name>')
 @login_required
-def delete_table(table_name):
+def reset_table(table_name):
     cursor = new_cursor()
-    """Safely drop a table and refresh the DB list without crashing the app."""
+
+    """Safely drop reset a table"""
+
     try:
 
-        # Temporarily disable FK constraints to avoid dependency crashes
         cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
-
-        # Use backticks to handle reserved names
-        cursor.execute(f"DROP TABLE IF EXISTS `{table_name}`;")
-
+        cursor.execute(f"DROP TABLE IF EXISTS {table_name};")
         cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
         mycon.commit()
-
-        log_activity(f"Deleted table: {table_name}")
+        create_init_db()
+        log_activity(f"Reset table: {table_name}")
 
     except Exception as e:
         mycon.rollback()
-        log_activity(f"Error deleting table {table_name}: {e}")
+        log_activity(f"Error Resetting table {table_name}: {e}")
 
     finally:
         cursor.close()
 
-    # Use redirect AFTER cursor is safely closed
     return redirect(url_for('dbms'))
 
-@app.route('/view_invoice/<int:bill_no>')
+@app.route('/reset')
 @login_required
-def view_invoice(bill_no):
-    """Open the saved PDF invoice for a specific BillNo."""
+def reset_db():
+
+    """Safely reset the database"""
+
+    cursor = new_cursor()
+    tables = ["TRANSPORT", "LOGIN", "PROFIT_AND_LOSS", "SALES", "PRODUCTS", "USER", "SETTINGS"]
     try:
-        # Fetch customer name for filename
-        mycursor.execute("SELECT Customer_Name FROM SALES WHERE BillNo = %s", (bill_no,))
-        record = mycursor.fetchone()
-
-        if not record:
-            flash("❌ Invoice not found for this BillNo.", "error")
-            return redirect(url_for('sales'))
-
-        customer_name = record['Customer_Name']
-        filename = f"GST_Invoice_{customer_name}_{bill_no}.pdf"
-        file_path = os.path.abspath(filename)
-
-        if not os.path.exists(file_path):
-            flash("❌ PDF not found. It may not have been generated yet.", "error")
-            return redirect(url_for('sales'))
-
-        # Send the file to the browser to view/download
-        return send_file(file_path, as_attachment=False)
-
-    except Exception as e:
-        flash(f"❌ Error opening invoice: {e}", "error")
-        return redirect(url_for('sales'))
+        for i in tables:
+            cursor.execute(f"DROP TABLE IF EXISTS {i}")
+        mycon.commit()
+        log_activity("Reset TRANSPORT, LOGIN, PROFIT_AND_LOSS, SALES, PRODUCTS, USER and SETTINGS tables from the database")
+        create_init_db()
+        session.pop('username', None)
+        session.pop('user_id', None)
+        session.pop('department', None)
+        return redirect(url_for('register'))
     
+    except:
+        log_activity("Error Resetting the Database")
+
 if __name__ == '__main__':
-    # Initial setup to ensure database/tables/settings are ready
     create_init_db()
-    # FIX: Update global company_name before Flask runs
     company_name = check_settings_filled()
-
-    # The original CLI/GUI choice logic is commented out, so it defaults to GUI.
-    # To run CLI instead, uncomment the following block and comment out the app.run(debug=True)
-    
-    # userinput = 2 # Default to GUI for the provided code
-    # try:
-    #     userinput = int(input('Enter 1 for CLI or 2 for GUI: '))
-    # except ValueError:
-    #     print("Invalid choice. Defaulting to GUI.")
-    # except KeyboardInterrupt:
-    #     print("\nExiting.")
-    #     sys.exit(0)
-    
-    # if userinput == 1:
-    #     checks_cli() # Run CLI checks/setup
-    #     main_menu()
-    # elif userinput == 2:
-    #     webbrowser.open("http://127.0.0.1:5000/login") # Open login page
-    app.run(debug=True)
-    # else:
-    #     print("Invalid Choice Entered")
+    app.run(debug=False)

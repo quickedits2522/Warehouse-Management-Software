@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login Management - {{ company_name }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+  body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0; padding: 0;
+    background: linear-gradient(135deg, #b6c7d6 0%, #95e0ea 100%);
+    min-height: 100vh;
+  }
+  header {
+    position: sticky; top:0; z-index:1000;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:20px 40px; background:#f0f4f8;
+    box-shadow:0 2px 10px rgba(0,0,0,0.1);
+  }
+  .header-left {display:flex; align-items:center;}
+  header img {height:50px; margin-right:15px; object-fit:contain;}
+  header h1 {font-size:1.8rem; color:#1e3a8a; margin:0;}
+  .header-right a {
+    text-decoration:none; color:white; background-color:#2563eb;
+    padding:10px 20px; border-radius:8px; font-weight:600; margin-left:10px;
+  }
+  main {padding:40px 50px;}
+  h2 {text-align:center; color:#1e3a8a; margin-bottom:30px;}
+  .cards-container {display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:25px; margin-bottom:30px;}
+  .card {background:rgba(203, 228, 233, 0.8); backdrop-filter:blur(10px); border-radius:15px; padding:20px; text-align:center; box-shadow:0 5px 15px rgba(0,0,0,0.1);}
+  .card .emoji {font-size:3rem; margin-bottom:8px;}
+  .card h3 {margin:10px 0 5px 0; color:#1e3a8a;}
+  .card .value {font-size:2rem; font-weight:600; color:#111827;}
+  .action-buttons {text-align:right; margin-bottom:15px;}
+  .action-buttons a button {
+    background-color:#2563eb; color:white; border:none;
+    padding:10px 20px; border-radius:8px; font-weight:600;
+    cursor:pointer; margin-right:5px;
+  }
+  .action-buttons a button:hover {background-color:#1d4ed8;}
+  .search-box {margin-bottom:15px; text-align:left;}
+  .search-box input {padding:8px 12px; width:250px; border-radius:6px; border:1px solid #ccc;}
+  .table-container {overflow-x:auto; background:rgba(203, 228, 233, 0.8); backdrop-filter:blur(10px); border-radius:15px; padding:20px; box-shadow:0 5px 15px rgba(0,0,0,0.1);}
+  table {width:100%; border-collapse:collapse; min-width:600px;}
+  th, td {padding:12px 15px; text-align:center;}
+  th {background-color:#2563eb; color:white; font-weight:600; cursor:pointer; position:relative;}
+  th .arrow {font-size:0.8rem; margin-left:5px;}
+  tr:nth-child(even) {background-color:rgba(255,255,255,0.6);}
+  tr:hover {background-color:rgba(37,99,235,0.2);}
+  body {opacity:0; animation:fadeIn 0.7s ease-in forwards;}
+  @keyframes fadeIn {from {opacity:0;} to {opacity:1;}}
+  .card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="/static/logo.png" alt="Company Logo">
+    <h1><b>{{ company_name }}</b></h1>
+  </div>
+  <div class="header-right">
+    <a href="/">🏠 Dashboard</a>
+  </div>
+</header>
+
+<main>
+<h2><b>Login Management</b></h2>
+
+<!-- Summary Card -->
+<div class="cards-container">
+  <div class="card">
+    <div class="emoji">🔐</div>
+    <h3><b>Total Logins</b></h3>
+    <div class="value">{{ login_data|length }}</div>
+  </div>
+</div>
+
+<!-- Search Box -->
+<div class="search-box">
+  <input type="text" id="searchInput" placeholder="Search by Username or Department..." onkeyup="filterTable()">
+</div>
+
+<!-- Table -->
+<div class="table-container">
+  <table id="loginTable">
+    <thead>
+      <tr>
+        <th>User ID</th>
+        <th>Name</th>
+        <th>Username</th>
+        <th>Department</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in login_data %}
+      <tr>
+        <td>{{ row.UserID }}</td>
+        <td>{{ row.Name }}</td>
+        <td>{{ row.Username }}</td>
+        <td>{{ row.Department }}</td>
+        <td>
+          <button class="btn btn-sm btn-warning" onclick="openResetModal('{{ row.UserID }}','{{ row.Username }}')">🔑 Reset</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteLogin('{{ row.UserID }}')">🗑️ Delete</button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal fade" id="resetModal" tabindex="-1" aria-labelledby="resetModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="/reset_password">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="resetModalLabel">Reset Password</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="resetUserID" name="user_id">
+          <div class="mb-3">
+            <label>Username</label>
+            <input type="text" id="resetUsername" class="form-control" readonly>
+          </div>
+          <div class="mb-3">
+            <label>New Password</label>
+            <input type="password" name="new_password" class="form-control" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">🔄 Reset Password</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function filterTable(){
+    const filter=document.getElementById("searchInput").value.toLowerCase();
+    const tr=document.getElementById("loginTable").getElementsByTagName("tr");
+    for(let i=1;i<tr.length;i++){
+      let tdUser=tr[i].getElementsByTagName("td")[2];
+      let tdDept=tr[i].getElementsByTagName("td")[3];
+      if(tdUser && tdDept){
+        let text=(tdUser.textContent+tdDept.textContent).toLowerCase();
+        tr[i].style.display=text.includes(filter)?"":"none";
+      }
+    }
+  }
+
+  function deleteLogin(id){
+    if(confirm("Are you sure you want to delete User ID "+id+"?")){
+      window.location.href="/delete_login/"+id;
+    }
+  }
+
+  function openResetModal(id, username){
+    document.getElementById("resetUserID").value=id;
+    document.getElementById("resetUsername").value=username;
+    new bootstrap.Modal(document.getElementById("resetModal")).show();
+  }
+</script>
+</body>
+</html>

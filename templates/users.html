@@ -56,6 +56,13 @@
       from { opacity: 0; }
       to   { opacity: 1; }
     }
+    .card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
 </style>
 </head>
 <body>
@@ -85,6 +92,7 @@
 <!-- Action Buttons -->
 <div class="action-buttons">
   <button data-bs-toggle="modal" data-bs-target="#addModal">➕ Add User</button>
+  <a href="/view_logins"><button>🔐 View Logins</button></a>
   <a href="/export_users"><button>📥 Export to CSV</button></a>
 </div>
 
@@ -100,8 +108,9 @@
       <tr>
         <th onclick="sortTable(0,'num')">User ID <span class="arrow">⬍</span></th>
         <th onclick="sortTable(1,'num')">Name <span class="arrow">⬍</span></th>
-        <th onclick="sortTable(2,'str')">Department <span class="arrow">⬍</span></th>
-        <th onclick="sortTable(3,'num')">Salary <span class="arrow">⬍</span></th>
+        <th onclick="sortTable(2,'num')">Username <span class="arrow">⬍</span></th>
+        <th onclick="sortTable(3,'str')">Department <span class="arrow">⬍</span></th>
+        <th onclick="sortTable(4,'num')">Salary <span class="arrow">⬍</span></th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -110,6 +119,7 @@
       <tr>
         <td>{{ row.UserID }}</td>
         <td>{{ row.Name }}</td>
+        <td>{{ row.Username }}</td>
         <td>{{ row.Department }}</td>
         <td>{{ row.Salary }}</td>
         <td>
@@ -135,6 +145,10 @@
           <div class="mb-3">
             <label>Name</label>
             <input type="text" name="name" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label>Username</label>
+            <input type="text" name="username" class="form-control" required>
           </div>
           <div class="mb-3">
             <label>Department</label>
@@ -167,6 +181,7 @@
         <div class="modal-body">
           <input type="hidden" name="user_id" id="editUserID">
           <div class="mb-3"><label>Name</label><input type="text" name="name" id="editName" class="form-control" required></div>
+          <div class="mb-3"><label>Username</label><input type="text" name="username" id="editUsername" class="form-control" required></div>
           <div class="mb-3"><label>Department</label><input type="text" name="department" id="editDepartment" class="form-control" required></div>
           <div class="mb-3"><label>Salary</label><input type="number" name="salary" id="editSalary" class="form-control" required>
           </div>
@@ -223,8 +238,9 @@
     if(row){
       document.getElementById("editUserID").value=row.cells[0].innerText;
       document.getElementById("editName").value=row.cells[1].innerText;
-      document.getElementById("editDepartment").value=row.cells[2].innerText;
-      document.getElementById("editSalary").value=row.cells[3].innerText;
+      document.getElementById("editUsername").value=row.cells[2].innerText;
+      document.getElementById("editDepartment").value=row.cells[3].innerText;
+      document.getElementById("editSalary").value=row.cells[4].innerText;
       new bootstrap.Modal(document.getElementById('editModal')).show();
     }
   }
@@ -235,6 +251,16 @@
       window.location.href="/delete_user/"+id;
     }
   }
+  
+</script>
+<script>
+  setTimeout(() => {
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+      const bsAlert = new bootstrap.Alert(alert);
+      bsAlert.close();
+    });
+  }, 4000); // auto-hide after 4s
 </script>
 </body>
 </html>

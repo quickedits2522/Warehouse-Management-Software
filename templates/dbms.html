@@ -103,12 +103,12 @@
 <!-- Action Buttons -->
 <div class="action-buttons">
   <a href="/settings"><button>⚙️ Adjust Settings</button></a>
-  <a href="/export_databases"><button>📥 Export to CSV</button></a>
+  <a><button onclick="resetDatabase()">⚙️ Reset Entire DB</button></a>
 </div>
 
 <!-- Search Box -->
 <div class="search-box">
-  <input type="text" id="searchInput" placeholder="Search by Name..." onkeyup="filterTable()">
+  <input type="text" id="searchInput" placeholder="Search by Table Name..." onkeyup="filterTable()">
 </div>
 
 <!-- databases Table -->
@@ -117,16 +117,12 @@
     <thead>
       <tr>
         <th onclick="sortTable(0,'num')">Name<span class="arrow">⬍</span></th>
-        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
       {% for row in db_data %}
       <tr>
         <td>{{ row.table_name }}</td>
-        <td>
-          <button class="btn btn-sm btn-danger" onclick="deleteDatabase('{{ row.table_name }}')">🗑️ Delete</button>
-        </td>
       </tr>
       {% endfor %}
     </tbody>
@@ -150,11 +146,19 @@
   }
 
   // Delete Database
-  function deleteDatabase(id){
-    if(confirm("Are you sure you want to delete database : "+id+"?")){
-      window.location.href="/delete_table/"+id;
+  function resetTable(id){
+    if(confirm("Are you sure you want to reset table : "+id+"?")){
+      window.location.href="/reset_table/"+id;
     }
   }
+
+  // Reset Database
+  function resetDatabase(){
+    if(confirm("You will lose all your data and will need to register again!\n! THIS PROCESS IS IRREVERSIBLE !\n\nAre you sure you want to reset the database WMS?")){
+      window.location.href="/reset";
+    }
+  }
+
 </script>
 </body> 
 </html>
