@@ -1396,6 +1396,23 @@ def export_sales():
         flash("❌ Error exporting sales data.", "error")
         return redirect(url_for('sales'))
 
+@app.route('/delete_sale/<int:billno>')
+@login_required
+def delete_sale(billno):
+    try:
+        # Delete related profit_and_loss first
+        mycursor.execute("DELETE FROM PROFIT_AND_LOSS WHERE BillNo = %s", (billno,))
+        # Delete the sale itself
+        mycursor.execute("DELETE FROM SALES WHERE BillNo = %s", (billno,))
+        mycon.commit()
+        flash(f"✅ Sale record with BillNo {billno} deleted successfully!", "success")
+        log_activity(f"Sale record with BillNo {billno} deleted via GUI.")
+    except Exception as e:
+        mycon.rollback()
+        flash(f"❌ Error deleting sale record: {e}", "error")
+        log_activity(f"Error deleting sale record with BillNo {billno}: {e}")
+    return redirect(url_for('sales'))
+
 # ---------- User Profile Management ----------
 
 @app.route('/profile', methods=['GET', 'POST'])
