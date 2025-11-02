@@ -224,7 +224,7 @@ def update_user_cli():
     
     try :
         column = input("Enter Column where the value is to be changed: ")
-        value1 = input("Enter UserID of the entry to be updated: ")
+        value1 = int(input("Enter UserID of the entry to be updated: "))
         value2 = input("Enter Updated value: ")
         mycursor.execute("UPDATE USER SET %s = %s WHERE UserID = %s", (column, value2, value1))
         mycon.commit()
@@ -297,11 +297,11 @@ def update_stock_cli():
 
     try :
         column = input("Enter Column where the value is to be changed: ")
-        value1 = input("Enter ProductID of the entry to be updated: ")
+        p_id = int(input("Enter ProductID of the entry to be updated: "))
         value2 = input("Enter Updated value: ")
-        mycursor.execute("update Products set %s = %s where ProductID = %s", (column, value2, value1))
+        mycursor.execute("update Products set %s = %s where ProductID = %s", (column, value2, p_id))
         mycon.commit()
-        log_activity(f"Value of {column} updated to {value2} for the ProductID : {value1} successfully")
+        log_activity(f"Value of {column} updated to {value2} for the ProductID : {p_id} successfully")
 
     except Exception as e:
         log_activity(f"An error occurred: {e}")
