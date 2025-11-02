@@ -226,7 +226,7 @@ def update_user_cli():
         column = input("Enter Column where the value is to be changed: ")
         value1 = int(input("Enter UserID of the entry to be updated: "))
         value2 = input("Enter Updated value: ")
-        mycursor.execute("UPDATE USER SET %s = %s WHERE UserID = %s", (column, value2, value1))
+        mycursor.execute(f"UPDATE USER SET {column} = {value2} WHERE UserID = {value2}")
         mycon.commit()
         log_activity(f"Value of column : {column} updated to {value2} successfully updated for UserID : {value1}")
 
@@ -299,7 +299,7 @@ def update_stock_cli():
         column = input("Enter Column where the value is to be changed: ")
         p_id = int(input("Enter ProductID of the entry to be updated: "))
         value2 = input("Enter Updated value: ")
-        mycursor.execute("update Products set %s = %s where ProductID = %s", (column, value2, p_id))
+        mycursor.execute(f"update Products set {column} = {value2} where ProductID = {p_id}")
         mycon.commit()
         log_activity(f"Value of {column} updated to {value2} for the ProductID : {p_id} successfully")
 
@@ -471,7 +471,7 @@ def update_shipment_status_cli():
     try:
         ship_id = int(input("Enter ShipmentID to update status: "))
         new_status = input("Enter new status (e.g., In Transit, Delivered): ")
-        mycursor.execute("UPDATE TRANSPORT SET Status = %s WHERE ShipmentID = %s", (new_status, ship_id))
+        mycursor.execute(f"UPDATE TRANSPORT SET Status = {new_status} WHERE ShipmentID = {ship_id}")
         mycon.commit()
         log_activity("Shipment status updated successfully for ShipmentID : " + str(ship_id))
 
