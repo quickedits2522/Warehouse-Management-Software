@@ -111,11 +111,9 @@ def export_table_to_csv(table_name):
     """Exports data from a specified database table to a CSV file."""
     try:
         query = f"SELECT * FROM {table_name}"
-        # pandas.read_sql is used to fetch data directly into a DataFrame
         df = pd.read_sql(query, mycon) 
         filename = f"{table_name}_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         df.to_csv(filename, index=False)
-        # Get the absolute path for clean logging
         filepath = os.path.abspath(filename)
         log_activity(f"Exported {table_name} data to {filepath}")
         return filename
@@ -208,9 +206,10 @@ def search_user_cli():
     """CLI function to search and display a user by UserID."""
 
     try : 
+        ncursor = mycon.cursor()
         user = input("Enter UserID of the user to be found: ")
-        mycursor.execute("select * from user where UserID = %s", (user,))
-        table = from_db_cursor(mycursor)
+        ncursor.execute("select * from user where UserID = %s", (user,))
+        table = from_db_cursor(ncursor)
         if not table._rows :
             log_activity(f"No records found for UserID : {user}")
         else :
@@ -276,11 +275,14 @@ def remove_stock_cli():
         log_activity(f"An error occurred: {e}")
 
 def search_stock_cli():
+
     """CLI function to search and display a product by ProductID."""
+
     try:
+        ncursor = mycon.cursor()
         product = input("Enter the ProductID of the entry to be dislayed: ")
-        mycursor.execute("SELECT * FROM Products WHERE ProductID = %s", (product,))
-        table = from_db_cursor(mycursor)
+        ncursor.execute("SELECT * FROM Products WHERE ProductID = %s", (product,))
+        table = from_db_cursor(ncursor)
         if not table._rows :
             log_activity(f"No records found for ProductID: {product}")
         else :
@@ -449,8 +451,9 @@ def search_ship_cli():
     shipID = input("Enter the ShipmentID to be searched : ")
 
     try:
-        mycursor.execute("SELECT * FROM TRANSPORT WHERE ShipmentID = %s", (shipID,))
-        table = from_db_cursor(mycursor)
+        ncursor = mycon.cursor()
+        ncursor.execute("SELECT * FROM TRANSPORT WHERE ShipmentID = %s", (shipID,))
+        table = from_db_cursor(ncursor)
         if not table._rows:
             log_activity(f"No records found for the ShipmentID : {shipID}")
         else:
@@ -462,7 +465,9 @@ def search_ship_cli():
         log_activity(f"An error occurred: {e}")
 
 def update_shipment_status_cli():
+
     """CLI function to update shipment status by ShipmentID."""
+
     try:
         ship_id = int(input("Enter ShipmentID to update status: "))
         new_status = input("Enter new status (e.g., In Transit, Delivered): ")
@@ -483,12 +488,13 @@ def shipping_info_cli():
     """CLI function to view all shipment info."""
 
     try:
-        mycursor.execute("SELECT * FROM TRANSPORT")
-        table = from_db_cursor(mycursor)
+        ncursor = mycon.cursor()
+        ncursor.execute("SELECT * FROM TRANSPORT")
+        table = from_db_cursor(ncursor)
         if not table._rows :
             log_activity("No Shipment Records Found")
         else :
-            log_activity(table)
+            print(table)
             log_activity("Displayed all shipment records")
 
     except Exception as e:
@@ -499,10 +505,10 @@ def user_info_cli():
     """CLI function to view all users info."""
 
     try:
-        # Note: Added 'username' to the query to match updated schema
-        mycursor.execute("SELECT UserID, Name, Department, Salary, username FROM USER")
-        table = from_db_cursor(mycursor)
-        log_activity(table)
+        ncursor = mycon.cursor()
+        ncursor.execute("SELECT UserID, Name, Department, Salary, username FROM USER")
+        table = from_db_cursor(ncursor)
+        print(table)
         log_activity("Displayed all user records")
 
     except Exception as e:
@@ -513,9 +519,10 @@ def product_info_cli():
     """CLI function to view all products info."""
 
     try:
-        mycursor.execute("SELECT * FROM PRODUCTS")
-        table = from_db_cursor(mycursor)
-        log_activity(table)
+        ncursor = mycon.cursor()
+        ncursor.execute("SELECT * FROM PRODUCTS")
+        table = from_db_cursor(ncursor)
+        print(table)
         log_activity("Displayed all product records")
 
     except Exception as e:
@@ -526,12 +533,13 @@ def sale_info_cli():
     """CLI function to view all sales info."""
 
     try:
-        mycursor.execute("SELECT * FROM SALES")
-        table = from_db_cursor(mycursor)
+        ncursor = mycon.cursor()
+        ncursor.execute("SELECT * FROM SALES")
+        table = from_db_cursor(ncursor)
         if not table._rows :
             log_activity("No Sales Records Found")
         else :
-            log_activity(table)
+            print(table)
             log_activity("Displayed all sales records")
 
     except Exception as e:
