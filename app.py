@@ -1688,7 +1688,7 @@ def delete_shipment(id):
 def export_shipments():
 
     """Route to export transport table to CSV."""
-    
+
     filename = export_table_to_csv("TRANSPORT")
     if filename:
         return send_file(filename, as_attachment=True)
@@ -1871,4 +1871,11 @@ def reset_db():
 if __name__ == '__main__':
     create_init_db()
     company_name = check_settings_filled()
-    app.run(debug=False)
+    userin = int(input("Enter 1 for CLI and 2 for GUI : "))
+    if userin == 1:
+        main_menu()
+    elif userin == 2:
+        webbrowser.open("http://localhost:5000")
+        app.run(debug=False)
+    else :
+        print('Invalid Choice Entered. Exiting the program!')
