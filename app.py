@@ -22,6 +22,7 @@ import webbrowser
 from flask import Flask, jsonify, render_template, request, redirect, send_file, url_for, flash, session
 from flask_bcrypt import Bcrypt
 from functools import wraps
+from sqlalchemy import create_engine
 
 # -------- MySQL Connection ---------
 
@@ -108,8 +109,11 @@ def delete_db_cli():
         log_activity(f"An error occurred: {e}")
 
 def export_table_to_csv(table_name):
+
     """Exports data from a specified database table to a CSV file."""
+
     try:
+        engine = create_engine("mysql+mysqlconnector://root:mysql@localhost/WMS")
         query = f"SELECT * FROM {table_name}"
         df = pd.read_sql(query, mycon) 
         filename = f"{table_name}_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
