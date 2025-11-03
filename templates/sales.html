@@ -165,19 +165,17 @@
 
 <script>
   // Search/filter table
-  function filterTable(){
-    const filter=document.getElementById("searchInput").value.toLowerCase();
-    const table=document.getElementById("salesTable");
-    const tr=table.getElementsByTagName("tr");
-    for(let i=1;i<tr.length;i++){
-      let tdName=tr[i].getElementsByTagName("td")[1];
-      if(tdName){
-        let txtName=tdName.textContent.toLowerCase();
-        tr[i].style.display=(txtName.indexOf(filter)>-1)? "" : "none";
-      }
+  function filterTable() {
+    const filter = document.getElementById("searchInput").value.toLowerCase();
+    const table = document.getElementById("salesTable");
+    const tr = table.getElementsByTagName("tr");
+
+    for (let i = 1; i < tr.length; i++) { // skip header
+      const rowText = tr[i].textContent.toLowerCase();
+      tr[i].style.display = rowText.includes(filter) ? "" : "none";
     }
   }
-
+  
   // Delete Sale
   function deleteSale(id){
     if(confirm("Are you sure you want to delete this sale record?")){

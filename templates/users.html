@@ -78,6 +78,18 @@
 </header>
 
 <main>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="container mt-3">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
 <h2><b>User Management</b></h2>
 
 <!-- Summary Cards -->
@@ -220,15 +232,14 @@
   }
 
   // Search/filter table
-  function filterTable(){
-    const filter=document.getElementById("searchInput").value.toLowerCase();
-    const table=document.getElementById("shipmentsTable"); const tr=table.getElementsByTagName("tr");
-    for(let i=1;i<tr.length;i++){
-      let tdBill=tr[i].getElementsByTagName("td")[1]; let tdProduct=tr[i].getElementsByTagName("td")[2];
-      if(tdBill && tdProduct){
-        let txtBill=tdBill.textContent.toLowerCase(); let txtProd=tdProduct.textContent.toLowerCase();
-        tr[i].style.display=(txtBill.indexOf(filter)>-1 || txtProd.indexOf(filter)>-1)? "" : "none";
-      }
+  function filterTable() {
+    const filter = document.getElementById("searchInput").value.toLowerCase();
+    const table = document.getElementById("shipmentsTable");
+    const tr = table.getElementsByTagName("tr");
+
+    for (let i = 1; i < tr.length; i++) {
+      const rowText = tr[i].textContent.toLowerCase();
+      tr[i].style.display = rowText.includes(filter) ? "" : "none";
     }
   }
 

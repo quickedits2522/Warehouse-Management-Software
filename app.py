@@ -21,6 +21,7 @@ import io
 import webbrowser
 from flask import Flask, jsonify, render_template, request, redirect, send_file, url_for, flash, session
 from flask_bcrypt import Bcrypt
+from flask import after_this_request
 from functools import wraps
 from sqlalchemy import create_engine
 
@@ -98,6 +99,8 @@ def delete_db_cli():
                 mycursor.execute(f"DROP TABLE IF EXISTS {i}")
             mycon.commit()
             log_activity("Deleted TRANSPORT, LOGIN, PROFIT_AND_LOSS, SALES, PRODUCTS, USER and SETTINGS tables from the database")
+            print("Exiting the program as the database has been deleted.")
+            sys.exit(0)
 
         elif usr_confirm in "Nn" : 
             log_activity("Operation Canceled by the user")
@@ -120,7 +123,7 @@ def export_table_to_csv(table_name):
         df.to_csv(filename, index=False)
         filepath = os.path.abspath(filename)
         log_activity(f"Exported {table_name} data to {filepath}")
-        return filename
+        return filepath
     except Exception as e:
         log_activity(f"Error exporting data: {e}")
         return None
@@ -230,7 +233,7 @@ def update_user_cli():
         column = input("Enter Column where the value is to be changed: ")
         value1 = int(input("Enter UserID of the entry to be updated: "))
         value2 = input("Enter Updated value: ")
-        mycursor.execute(f"UPDATE USER SET {column} = {value2} WHERE UserID = {value2}")
+        mycursor.execute(f"UPDATE USER SET {column} = {value2} WHERE UserID = {value1}")
         mycon.commit()
         log_activity(f"Value of column : {column} updated to {value2} successfully updated for UserID : {value1}")
 
@@ -423,12 +426,14 @@ def search_sale_cli():
 
     try:
         billno = input("Enter the BillNo of the sale record to be searched : ")
-        mycursor.execute("SELECT * FROM SALES WHERE BillNo = %s", (billno,))
-        table = from_db_cursor(mycursor)
+        ncursor = mycon.cursor()  # no dictionary, no buffered
+        ncursor.execute("SELECT * FROM SALES WHERE BillNo = %s", (billno,))
+        table = from_db_cursor(ncursor)
         if not table._rows :
             log_activity(f"No records found for BillNo : {billno}")
         else :
-            log_activity(table)
+            ##log_activity(table)
+            print(table)  # <-- print to terminal, not to log
             log_activity(f"Displayed record for BillNo : {billno}")
 
     except Exception as e:
@@ -475,7 +480,8 @@ def update_shipment_status_cli():
     try:
         ship_id = int(input("Enter ShipmentID to update status: "))
         new_status = input("Enter new status (e.g., In Transit, Delivered): ")
-        mycursor.execute(f"UPDATE TRANSPORT SET Status = {new_status} WHERE ShipmentID = {ship_id}")
+        query = "UPDATE TRANSPORT SET Status = %s WHERE ShipmentID = %s"
+        mycursor.execute(query, (new_status, ship_id))
         mycon.commit()
         log_activity("Shipment status updated successfully for ShipmentID : " + str(ship_id))
 
@@ -1113,8 +1119,6 @@ def main_menu():
                 if ch == 'a':
                     delete_db_cli()
                     print_divider()
-                    print("Exiting the program as the database has been deleted.")
-                    sys.exit(0)
 
                 elif ch == 'b':
                     table_name = input("Enter the table name to export: ")
@@ -1342,7 +1346,7 @@ def add_order():
             flash(f"❌ An unexpected error occurred: {e}", "error")
 
         # Return a clean GET redirect after POST to prevent resubmission
-        return redirect(url_for('add_order')) 
+        return redirect(url_for('sales')) 
 
     # For GET request
     return render_template('add_order.html', products=products, success=success, company_name=company_name, company_logo="/static/logo.png", today=today, username=session.get('username'))
@@ -1374,6 +1378,41 @@ def view_invoice(bill_no):
     except Exception as e:
         flash(f"Error opening invoice: {e}", "error")
         return redirect(url_for('sales'))
+
+@app.route('/export_sales')
+@login_required
+def export_sales():
+    """Route to export sales table to CSV."""
+    filename = export_table_to_csv("SALES")
+    if filename and os.path.exists(filename):
+        @after_this_request
+        def cleanup(response):
+            try:
+                os.remove(filename)
+            except Exception as e:
+                log_activity(f"Failed to delete temp file {filename}: {e}")
+            return response
+        return send_file(filename, as_attachment=True)
+    else:
+        flash("❌ Error exporting sales data.", "error")
+        return redirect(url_for('sales'))
+
+@app.route('/delete_sale/<int:billno>')
+@login_required
+def delete_sale(billno):
+    try:
+        # Delete related profit_and_loss first
+        mycursor.execute("DELETE FROM PROFIT_AND_LOSS WHERE BillNo = %s", (billno,))
+        # Delete the sale itself
+        mycursor.execute("DELETE FROM SALES WHERE BillNo = %s", (billno,))
+        mycon.commit()
+        flash(f"✅ Sale record with BillNo {billno} deleted successfully!", "success")
+        log_activity(f"Sale record with BillNo {billno} deleted via GUI.")
+    except Exception as e:
+        mycon.rollback()
+        flash(f"❌ Error deleting sale record: {e}", "error")
+        log_activity(f"Error deleting sale record with BillNo {billno}: {e}")
+    return redirect(url_for('sales'))
 
 # ---------- User Profile Management ----------
 
@@ -1526,7 +1565,7 @@ def p_and_l():
 def export_profit_loss():
     """Route to export profit and loss table to CSV."""
     filename = export_table_to_csv("PROFIT_AND_LOSS")
-    if filename:
+    if filename and os.path.exists(filename):
         return send_file(filename, as_attachment=True)
     else:
         flash("❌ Error exporting profit & loss data.", "error")
@@ -1572,11 +1611,12 @@ def add_product():
 def export_inventory(): 
     """Route to export products table to CSV."""
     filename = export_table_to_csv("PRODUCTS")
-    if filename:
+    if filename and os.path.exists(filename):
         log_activity("Exported Products Info")
         return send_file(filename, as_attachment=True)
         
     else:
+        flash("❌ Error exporting inventory.", "error")
         return redirect(url_for('inventory'))
 
 @app.route('/delete_product/<int:id>')
@@ -1707,7 +1747,7 @@ def export_shipments():
     """Route to export transport table to CSV."""
 
     filename = export_table_to_csv("TRANSPORT")
-    if filename:
+    if filename and os.path.exists(filename):
         return send_file(filename, as_attachment=True)
     else:
         flash("❌ Error exporting shipments data.", "error")
@@ -1824,6 +1864,24 @@ def reset_password():
 
     log_activity("Password reset successfully!", "success")
     return redirect(url_for('login'))
+
+@app.route('/export_users')
+@login_required
+def export_users():
+    """Route to export user table to CSV."""
+    filename = export_table_to_csv("USER")
+    if filename and os.path.exists(filename):
+        @after_this_request
+        def cleanup(response):
+            try:
+                os.remove(filename)
+            except Exception as e:
+                log_activity(f"Failed to delete temp file {filename}: {e}")
+            return response
+        return send_file(filename, as_attachment=True)
+    else:
+        flash("❌ Error exporting user data.", "error")
+        return redirect(url_for('users_webpage'))
 
 # ---------- Company Database Management ----------
 
