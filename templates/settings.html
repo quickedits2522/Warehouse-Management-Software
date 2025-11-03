@@ -58,6 +58,7 @@
       box-shadow: 0 4px 12px rgba(37,99,235,0.3);
       transition: all 0.3s ease;
     }
+
     .back-btn:hover {
       background: #1d4ed8;
       transform: translateY(-2px);
@@ -107,7 +108,8 @@
       text-align: right;
     }
 
-    .value input {
+    .value input,
+    .value select {
       width: 100%;
       max-width: 300px;
       padding: 10px 12px;
@@ -115,12 +117,23 @@
       border: 1px solid #cbd5e1;
       font-size: 0.95rem;
       transition: 0.2s ease;
+      box-sizing: border-box;
     }
 
-    .value input:focus {
+    .value input:focus,
+    .value select:focus {
       outline: none;
       border-color: #2563eb;
       box-shadow: 0 0 6px rgba(37,99,235,0.3);
+    }
+
+    .value select {
+      appearance: none;
+      background-image: url('data:image/svg+xml;utf8,<svg fill="%231e3a8a" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 16px;
+      background-color: white;
     }
 
     .save-btn {
@@ -173,7 +186,8 @@
         text-align: left;
         margin-top: 6px;
       }
-      .value input {
+      .value input,
+      .value select {
         width: 100%;
       }
     }
@@ -201,7 +215,8 @@
         {% endfor %}
       </div>
     {% endif %}
-  {% endwith %}
+    {% endwith %}
+    
     <h2>⚙️ System Settings</h2>
     <form method="POST" action="/settings" autocomplete="on">
       {% for key, value in settings.items() %}
@@ -215,13 +230,29 @@
           {% elif key == 'Company Email ID' %} {% set autocomplete_attr = "email" %}
           {% else %} {% set autocomplete_attr = "off" %} {% endif %}
 
-          {% if key in ['IGST', 'CGST', 'SGST'] %}
-            <input type="number" name="{{ key }}" value="{{ value }}" autocomplete="{{ autocomplete_attr }}" min="0" step="0.01" required>
+          {% if key == 'State' %}
+          <select name="{{ key }}" required>
+            <option value="">-- Select State --</option>
+            {% set states = [
+              'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana', 
+              'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 
+              'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 
+              'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Andaman and Nicobar Islands', 'Chandigarh', 
+              'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'
+            ] %}
+            {% for state in states %}
+              <option value="{{ state }}" {% if value == state %}selected{% endif %}>{{ state }}</option>
+            {% endfor %}
+          </select>
+
+          {% elif key in ['IGST', 'CGST', 'SGST'] %}
+            <input type="number" name="{{ key }}" value="{{ (value * 100) | round(2) }}" autocomplete="{{ autocomplete_attr }}" min="0" required>
           {% elif key in ['Company ID', 'Company Mobile Number'] %}
             <input type="number" name="{{ key }}" value="{{ value }}" autocomplete="{{ autocomplete_attr }}" min="0" required>
           {% else %}
             <input type="text" name="{{ key }}" value="{{ value }}" autocomplete="{{ autocomplete_attr }}" required>
           {% endif %}
+
         </div>
       </div>
       {% endfor %}

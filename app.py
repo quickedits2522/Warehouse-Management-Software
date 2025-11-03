@@ -1524,12 +1524,12 @@ def settings():
             mobile_no = request.form['Mobile_No']
             email = request.form['Email']
             upi = request.form['UPI']
-            igst = float(request.form['IGST'])
-            cgst = float(request.form['CGST'])
-            sgst = float(request.form['SGST'])
+            igst = float(request.form['IGST'])/100.0
+            cgst = float(request.form['CGST'])/100.0
+            sgst = float(request.form['SGST'])/100.0
         
         except ValueError:
-            flash("❌ Error: GST rates must be valid numbers.", "error")
+            log_activity("Error: GST rates must be valid numbers.")
             return redirect(url_for('settings'))
 
         if has_settings:
@@ -1548,7 +1548,7 @@ def settings():
         mycon.commit()
         # Update global variable after successful save
         company_name = check_settings_filled()
-        flash("✅ Settings saved successfully!", "success")
+        log_activity("Settings saved successfully!")
         return redirect(url_for('home'))
 
     if has_settings:
@@ -1828,12 +1828,20 @@ def add_user():
             name = request.form['name']
             dept = request.form['department']
             sal = int(request.form['salary'])
-            username = name.lower().replace(" ", "") # Generate a default username
+            username = request.form['username']
 
             # UserID is auto-generated.
             mycursor.execute("INSERT INTO USER (Name, username, Department, Salary) VALUES (%s, %s, %s, %s)", (name, username, dept, sal))
             mycon.commit()
-            log_activity(f"Added new user: Name : {name}, Department : {dept}, Salary : {sal}")
+            log_activity(f"Added new user: Name : {name}, Username : {username} Department : {dept}, Salary : {sal}")
+
+            user_id = mycursor.lastrowid
+
+            # Create login for the new user
+            default_password = bcrypt.generate_password_hash("Employee123").decode('utf-8')
+            mycursor.execute("INSERT INTO LOGIN (UserID, Username, Password, Department) VALUES (%s, %s, %s, %s)", (user_id, username, default_password, dept))
+            mycon.commit()
+            log_activity(f"Added new login for UserID {user_id}")
             flash("✅ User added successfully!", "success")
 
         except ValueError:
@@ -1858,7 +1866,7 @@ def edit_users():
         name = request.form['name']
         department = request.form['department']
         salary = int(request.form['salary'])
-        username = request.form.get('username') # Added username to update logic
+        username = request.form.get('username') or name.lower().strip()
 
         mycursor.execute("""
             UPDATE USER
@@ -2011,6 +2019,8 @@ def reset_db():
         session.pop('username', None)
         session.pop('user_id', None)
         session.pop('department', None)
+        global company_name
+        company_name = "Initial Setup"
         return redirect(url_for('register'))
     
     except:

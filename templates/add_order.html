@@ -6,25 +6,23 @@
   <title>Add Order</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    form input,
-    form select,
-    form textarea,
-    form button {
-    font-family: 'Poppins', sans-serif; 
-    font-size: 1rem; 
+    /* Global Font */
+    body, form input, form select, form textarea, form button {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1rem;
     }
 
+    /* Background */
     body {
-    font-family: 'Poppins', sans-serif;
-    margin: 0;
-    padding: 0;
-
-    /* Smooth light blue gradient */
-    background: linear-gradient(135deg, #b6c7d6 0%, #95e0ea 100%);
-    min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #b6c7d6 0%, #95e0ea 100%);
+      min-height: 100vh;
+      opacity: 0;
+      animation: fadeIn 0.7s ease-in forwards;
     }
 
-    /* Sticky Header */
+    /* Header */
     header {
       position: sticky;
       top: 0;
@@ -36,10 +34,6 @@
       background: #f0f4f8;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-
-    form, form label, form .success-message {
-    font-family: 'Poppins', sans-serif;
-  }
 
     .header-left {
       display: flex;
@@ -74,9 +68,9 @@
       transform: scale(1.05);
     }
 
-    /* Form Styling */
+    /* Form Container */
     form {
-      background: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.88);
       padding: 30px;
       border-radius: 15px;
       max-width: 600px;
@@ -98,21 +92,46 @@
       color: #1e3a8a;
     }
 
-    form input, form select, form textarea {
+    /* ✅ Uniform box styling */
+    form input,
+    form select,
+    form textarea {
       width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
+      box-sizing: border-box;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1.6px solid #bfcfe2;
       font-size: 1rem;
-      transition: all 0.3s ease;
-    }
-
-    form input:focus, form select:focus, form textarea:focus {
-      border-color: #2563eb;
-      box-shadow: 0 0 8px rgba(37,99,235,0.3);
+      line-height: 1.5;
+      transition: 0.3s ease;
       outline: none;
+      background-color: white;
     }
 
+    form textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    /* Dropdown arrow styling */
+    form select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-image: url('data:image/svg+xml;utf8,<svg fill="%231e3a8a" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 16px;
+    }
+
+    form input:focus,
+    form select:focus,
+    form textarea:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 6px rgba(37,99,235,0.3);
+    }
+
+    /* Button */
     form button {
       margin-top: 20px;
       background-color: #2563eb;
@@ -123,13 +142,15 @@
       font-weight: 600;
       cursor: pointer;
       transition: 0.3s;
+      width: 100%;
     }
 
     form button:hover {
       background-color: #1d4ed8;
-      transform: scale(1.05);
+      transform: scale(1.03);
     }
 
+    /* Success message */
     .success-message {
       margin-top: 15px;
       color: green;
@@ -138,16 +159,11 @@
       transition: opacity 1s ease;
     }
 
-    body {
-      opacity: 0;
-      animation: fadeIn 0.7s ease-in forwards;
-    }
-
     @keyframes fadeIn {
       from { opacity: 0; }
       to   { opacity: 1; }
     }
-    
+
     @media (max-width: 768px) {
       header, form {
         padding: 15px 20px;
@@ -195,7 +211,7 @@
       <option value="Delivered">Delivered</option>
     </select>
 
-    <label for="discount">Discount</label>
+    <label for="discount">Discount (%)</label>
     <input type="number" id="discount" name="discount" min="0" placeholder="e.g. 10" required>
 
     <label for="date">Order Date</label>
@@ -203,14 +219,12 @@
 
     <button type="submit">Add Order</button>
 
-    <!-- Conditional success message -->
     {% if success %}
       <div class="success-message" id="successMessage">✅ Order added successfully!</div>
     {% endif %}
   </form>
 
   <script>
-    // Fade out success message after 3 seconds
     const successMessage = document.getElementById('successMessage');
     if(successMessage){
       setTimeout(() => {
