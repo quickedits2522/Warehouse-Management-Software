@@ -124,6 +124,7 @@ def export_table_to_csv(table_name):
         filepath = os.path.abspath(filename)
         log_activity(f"Exported {table_name} data to {filepath}")
         return filepath
+    
     except Exception as e:
         log_activity(f"Error exporting data: {e}")
         return None
@@ -1212,8 +1213,9 @@ def register():
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
+
     """Route for user login."""
-    # FIX: Use the global company_name
+
     global company_name
     if request.method == "POST":
         usrname = request.form.get('username')
@@ -1232,23 +1234,28 @@ def login():
                 return redirect(url_for("home"))
             else:
                 return render_template("login.html", error="Invalid password", company_name=company_name)
+            
         else:
             return render_template("login.html", error="User not found", company_name=company_name)
 
     return render_template("login.html", company_name=company_name)
 
-# ------------ User Logout --------------
+# ------------ User Logout ---------------
 
 @app.route('/logout')
 def logout():
+
     """Route to log out and clear session."""
+
     session.pop('username', None)
     session.pop('user_id', None)
     session.pop('department', None)
     return redirect(url_for('login'))
 
 def login_required(f):
+
     """Decorator to ensure user is logged in."""
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'username' not in session:
@@ -1271,7 +1278,6 @@ def home():
         log_activity("Settings is not setup")
         return redirect(url_for('settings')) 
     
-    # Update global company_name after check
     company_name = check
     
     mycursor.execute("SELECT COUNT(UserID) FROM USER")
@@ -1293,7 +1299,9 @@ def home():
 @app.route('/sales', methods=['GET', 'POST'])
 @login_required
 def sales():
-    """Sales view route."""
+
+    """Sales management route."""
+
     global company_name
     mycursor.execute("SELECT SUM(Sale_Amount) FROM SALES")
     total_sale_amount = mycursor.fetchone()['SUM(Sale_Amount)'] or 0
@@ -1354,7 +1362,9 @@ def add_order():
 @app.route('/view_invoice/<int:bill_no>')
 @login_required
 def view_invoice(bill_no):
+
     """Open the saved PDF invoice for a specific BillNo."""
+
     try:
         # Fetch customer name for filename
         mycursor.execute("SELECT Customer_Name FROM SALES WHERE BillNo = %s", (bill_no,))
@@ -1382,7 +1392,9 @@ def view_invoice(bill_no):
 @app.route('/export_sales')
 @login_required
 def export_sales():
+
     """Route to export sales table to CSV."""
+
     filename = export_table_to_csv("SALES")
     if filename and os.path.exists(filename):
         @after_this_request
@@ -1400,6 +1412,9 @@ def export_sales():
 @app.route('/delete_sale/<int:billno>')
 @login_required
 def delete_sale(billno):
+
+    """Route to delete entries from sales table."""
+
     try:
         # Delete related profit_and_loss first
         mycursor.execute("DELETE FROM PROFIT_AND_LOSS WHERE BillNo = %s", (billno,))
@@ -1408,10 +1423,12 @@ def delete_sale(billno):
         mycon.commit()
         flash(f"✅ Sale record with BillNo {billno} deleted successfully!", "success")
         log_activity(f"Sale record with BillNo {billno} deleted via GUI.")
+
     except Exception as e:
         mycon.rollback()
         flash(f"❌ Error deleting sale record: {e}", "error")
         log_activity(f"Error deleting sale record with BillNo {billno}: {e}")
+
     return redirect(url_for('sales'))
 
 # ---------- User Profile Management ----------
@@ -1419,7 +1436,9 @@ def delete_sale(billno):
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
+
     """View and update the user profile."""
+
     username = session.get('username')
     if not username:
         flash("Please log in to access your profile.", "warning")
@@ -1427,7 +1446,7 @@ def profile():
 
     cursor = mycon.cursor(dictionary=True)
 
-    # 🔹 Fetch existing user data
+    # Fetch existing user data
     cursor.execute("SELECT * FROM user WHERE username = %s", (username,))
     user = cursor.fetchone()
 
@@ -1436,7 +1455,7 @@ def profile():
         flash("User not found.", "danger")
         return redirect(url_for('home'))
 
-    # 🔹 Handle form submission
+    # Handle form submission
     if request.method == 'POST':
         name = request.form.get('name')
         email = request.form.get('email')
@@ -1485,7 +1504,9 @@ def profile():
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
+
     """Route for viewing and updating company settings."""
+
     global company_name
     mycursor.execute("SELECT COUNT(*) AS count FROM SETTINGS")
     result = mycursor.fetchone()
@@ -1535,14 +1556,16 @@ def settings():
     
     else:
         # Initial setup page
-        return render_template('settings_setup.html', company_name="WMS Setup", username=session.get('username'))
+        return render_template('settings_setup.html', company_name="Initial Setup", username=session.get('username'))
     
 # ---------- Company Financial Management ----------
 
 @app.route("/profit_loss")
 @login_required
 def p_and_l():
+
     """Profit and Loss report route."""
+
     global company_name
     mycursor.execute("SELECT * FROM PROFIT_AND_LOSS ORDER BY BillNo DESC")
     data = mycursor.fetchall()
@@ -1550,6 +1573,7 @@ def p_and_l():
     # Using BillNo (int) and Product_Name (string) for unique counts
     total_bills = len(set(row['BillNo'] for row in data))
     total_products = len(set(row['Product_Name'] for row in data))
+
     return render_template(
         'Profit_and_loss.html',
         company_name=company_name,
@@ -1563,10 +1587,14 @@ def p_and_l():
 @app.route('/export_profit_loss')
 @login_required
 def export_profit_loss():
+
     """Route to export profit and loss table to CSV."""
+
     filename = export_table_to_csv("PROFIT_AND_LOSS")
+
     if filename and os.path.exists(filename):
         return send_file(filename, as_attachment=True)
+    
     else:
         flash("❌ Error exporting profit & loss data.", "error")
         return redirect(url_for('p_and_l'))
@@ -1576,31 +1604,40 @@ def export_profit_loss():
 @app.route('/inventory')
 @login_required
 def inventory():
+
     """Inventory/Products management route."""
+
     global company_name
     mycursor.execute("SELECT * FROM PRODUCTS ORDER BY ProductID DESC")
     products_data = mycursor.fetchall()
     total_products = sum(p['Quantity'] for p in products_data)
     total_value = int(sum((p['MRP'] or 0) * (p['Quantity'] or 0) for p in products_data)) # Handle potential None/null values
+
     return render_template('inventory.html', company_name=company_name, products_data=products_data, total_products=total_products, total_value=total_value, username=session.get('username'))
 
 @app.route("/add_product", methods=["POST"])
 @login_required
 def add_product():
+
     """Route to add a new product."""
+
     if request.method == "POST":
         try:
             name = request.form['product_name']
             cp = float(request.form['cost_price'])
             mrp = float(request.form['mrp'])
             qty = int(request.form["quantity"])
+
             # ProductID is AUTO_INCREMENT
+
             mycursor.execute("INSERT INTO PRODUCTS (Product_Name, Cost_Price, MRP, Quantity) VALUES (%s, %s, %s, %s)", (name, cp, mrp, qty))
             mycon.commit()
             log_activity(f"Added new product : Product Name : {name}, Cost_price : {cp}, MRP : {mrp}, Quantity : {qty}")
             flash("✅ Product added successfully!", "success")
+
         except ValueError:
              flash("❌ Error: Please ensure Cost Price, MRP, and Quantity are valid numbers.", "error")
+
         except Exception as e:
             flash(f"❌ Error adding product: {e}", "error")
             
@@ -1609,8 +1646,11 @@ def add_product():
 @app.route('/export_inventory')
 @login_required
 def export_inventory(): 
+
     """Route to export products table to CSV."""
+
     filename = export_table_to_csv("PRODUCTS")
+
     if filename and os.path.exists(filename):
         log_activity("Exported Products Info")
         return send_file(filename, as_attachment=True)
@@ -1622,16 +1662,21 @@ def export_inventory():
 @app.route('/delete_product/<int:id>')
 @login_required
 def delete_product(id):
+
     """Route to delete a product by ProductID."""
+
     mycursor.execute("DELETE FROM PRODUCTS WHERE PRODUCTID=%s", (id,))
     mycon.commit()
     flash("✅ Product deleted successfully!", "success")
+
     return redirect(url_for('inventory'))
 
 @app.route('/edit_product', methods=['POST'])
 @login_required
 def edit_inventory():
+
     """Route to edit a product's details."""
+
     try:
         productid = request.form['product_id']
         product_name = request.form['product_name']
@@ -1646,8 +1691,10 @@ def edit_inventory():
 
         mycon.commit()
         flash("✅ Product updated successfully!", "success")
+
     except ValueError:
         flash("❌ Error: Please ensure Cost Price, MRP, and Quantity are valid numbers.", "error")
+
     except Exception as e:
         flash(f"❌ Error updating product: {e}", "error")
         
@@ -1666,7 +1713,6 @@ def shipments():
     shipments_data = mycursor.fetchall()
     # Summary cards
     total_shipments = len(shipments_data)
-    # FIX: Use .lower() for robust status comparison
     pending = len([s for s in shipments_data if s['Status'] and s['Status'].lower() == 'pending'])
     delivered = len([s for s in shipments_data if s['Status'] and s['Status'].lower() == 'delivered'])
     
@@ -1681,7 +1727,9 @@ def shipments():
 @app.route('/edit_shipment', methods=['POST'])
 @login_required
 def edit_shipment():
+
     """Route to edit shipment details."""
+
     try:
         shipment_id = request.form['shipment_id']
         bill_no = request.form['bill_no']
@@ -1689,7 +1737,6 @@ def edit_shipment():
         status = request.form['status']
 
         mycursor.execute("UPDATE TRANSPORT SET BillNo=%s, Address=%s, Status=%s WHERE ShipmentID=%s", (bill_no, address, status, shipment_id))
-
         mycon.commit()
 
         flash("✅ Shipment updated successfully!", "success")
@@ -1758,17 +1805,22 @@ def export_shipments():
 @app.route('/users')
 @login_required
 def users_webpage():
+
     """Users management route."""
+
     global company_name
     mycursor.execute("SELECT * FROM USER ORDER BY UserID DESC")
     users_data = mycursor.fetchall()
     count = len(users_data)
+
     return render_template('users.html', company_name=company_name, users_data=users_data, count=count, username=session.get('username'))
 
 @app.route("/add_user", methods=["POST"])
 @login_required
 def add_user():
+
     """Route to add a new user (for USER table)."""
+
     if request.method == "POST":
         try:
             name = request.form['name']
@@ -1776,15 +1828,18 @@ def add_user():
             sal = int(request.form['salary'])
             username = name.lower().replace(" ", "") # Generate a default username
 
-            # Insert into USER table. UserID is auto-generated.
+            # UserID is auto-generated.
             mycursor.execute("INSERT INTO USER (Name, username, Department, Salary) VALUES (%s, %s, %s, %s)", (name, username, dept, sal))
             mycon.commit()
             log_activity(f"Added new user: Name : {name}, Department : {dept}, Salary : {sal}")
             flash("✅ User added successfully!", "success")
+
         except ValueError:
             flash("❌ Error: Salary must be a number.", "error")
+
         except ms.IntegrityError:
             flash("❌ Error: Username already exists. Please update the user manually.", "error")
+
         except Exception as e:
              flash(f"❌ Error adding user: {e}", "error")
              
@@ -1793,7 +1848,9 @@ def add_user():
 @app.route('/edit_users', methods=['POST'])
 @login_required
 def edit_users():
+
     """Route to edit user details."""
+
     try:
         user_id = request.form['user_id']
         name = request.form['name']
@@ -1827,8 +1884,9 @@ def edit_users():
 @app.route('/delete_user/<int:id>')
 @login_required
 def delete_user(id):
+
     """Route to delete a user by UserID. (Also deletes LOGIN record via CASCADE)."""
-    # Delete from USER will cascade to LOGIN (ON DELETE CASCADE)
+
     mycursor.execute("DELETE FROM USER WHERE UserID=%s", (id,))
     mycon.commit()
     flash("✅ User and associated login record deleted successfully!", "success")
@@ -1837,6 +1895,9 @@ def delete_user(id):
 @app.route('/view_logins')
 @login_required
 def view_logins():
+
+    """Route to view logins."""
+
     cursor = mycon.cursor(dictionary=True)
     cursor.execute("""
         SELECT 
@@ -1847,11 +1908,15 @@ def view_logins():
     """)
     data = cursor.fetchall()
     cursor.close()
+
     return render_template('view_logins.html', login_data=data, company_name=company_name)
 
 @app.route('/reset_password', methods=['POST'])
 @login_required
 def reset_password():
+
+    """Route to reset passwords."""
+
     user_id = request.form['user_id']
     new_password = request.form['new_password']
 
@@ -1868,7 +1933,9 @@ def reset_password():
 @app.route('/export_users')
 @login_required
 def export_users():
+
     """Route to export user table to CSV."""
+
     filename = export_table_to_csv("USER")
     if filename and os.path.exists(filename):
         @after_this_request
@@ -1879,6 +1946,7 @@ def export_users():
                 log_activity(f"Failed to delete temp file {filename}: {e}")
             return response
         return send_file(filename, as_attachment=True)
+    
     else:
         flash("❌ Error exporting user data.", "error")
         return redirect(url_for('users_webpage'))
@@ -1888,12 +1956,15 @@ def export_users():
 @app.route('/dbm', methods=['GET', 'POST'])
 @login_required
 def dbms():
+
     """Database management route."""
+
     global company_name
     mycursor.execute("show tables")
     tables = [t[f'Tables_in_{mycon.database}'] for t in mycursor.fetchall()] # Extract table names
-    # Convert list of table names back to list of dicts for template compatibility if needed
+
     db_data = [{'table_name': t} for t in tables] 
+
     return render_template('dbms.html', db_data=db_data, company_name=company_name, no_of_tables=len(tables), username=session.get('username'))
 
 @app.route('/reset_table/<table_name>')
@@ -1949,8 +2020,10 @@ if __name__ == '__main__':
     userin = int(input("Enter 1 for CLI and 2 for GUI : "))
     if userin == 1:
         main_menu()
+
     elif userin == 2:
         webbrowser.open("http://localhost:5000")
         app.run(debug=False)
+
     else :
         print('Invalid Choice Entered. Exiting the program!')
