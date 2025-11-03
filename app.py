@@ -1204,7 +1204,6 @@ def register():
                          (user_id, usrname, hashed_pw, department))
         mycon.commit()
 
-        flash("Account created successfully! Please log in.", "success")
         return redirect(url_for('login'))
 
     return render_template("register.html", company_name=company_name)
@@ -1213,10 +1212,14 @@ def register():
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
-
     """Route for user login."""
 
     global company_name
+
+    # Redirect if user already logged in
+    if 'username' in session:
+        return redirect(url_for("home"))
+
     if request.method == "POST":
         usrname = request.form.get('username')
         password = request.form.get('password')
@@ -1225,16 +1228,17 @@ def login():
         record = mycursor.fetchone()
 
         if record:
-            stored_hash = record['Password'].encode('utf-8') if isinstance(record['Password'], str) else record['Password']
-            
-            if usrname and bcrypt.check_password_hash(record['Password'], password):
+            # Use stored hash from DB
+            stored_hash = record['Password']
+
+            # Check password securely
+            if bcrypt.check_password_hash(stored_hash, password):
                 session['username'] = usrname
-                session['user_id'] = record['UserID'] # Store UserID in session
-                session['department'] = record['Department'] # Store Department in session
+                session['user_id'] = record['UserID']
+                session['department'] = record['Department']
                 return redirect(url_for("home"))
             else:
                 return render_template("login.html", error="Invalid password", company_name=company_name)
-            
         else:
             return render_template("login.html", error="User not found", company_name=company_name)
 
@@ -1247,9 +1251,7 @@ def logout():
 
     """Route to log out and clear session."""
 
-    session.pop('username', None)
-    session.pop('user_id', None)
-    session.pop('department', None)
+    session.clear()
     return redirect(url_for('login'))
 
 def login_required(f):
@@ -1499,7 +1501,7 @@ def profile():
         user_phone=user.get('phone', '')
     )
 
-# ---------- Company Settings Management ----------
+# -------------- Company Settings Management ---------------
 
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
