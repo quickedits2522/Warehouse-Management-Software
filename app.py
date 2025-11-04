@@ -315,98 +315,133 @@ def update_stock_cli():
         log_activity(f"An error occurred: {e}")
 
 # --------------- Sales Related Functions ----------------
-
+##changes made
 def record_sale(custm_name, address, product, qty, today, status, discount = 0.0):
-
     """Record a sale, update inventory, generate bill, and record shipment."""
-    
     discount_rate = discount / 100.0 if discount > 0.0 else 0.0
 
     try:
+        # 1. Product fetch and check
         mycursor.execute("SELECT MRP, Cost_Price, Quantity FROM PRODUCTS WHERE Product_Name = %s", (product,))
         output = mycursor.fetchall()
-        
         if not output:
-            log_activity(f"\nProduct '{product}' not found in inventory.")
+            log_activity(f"❌ Product '{product}' not found in inventory.")
+            print(f"ERROR: Product '{product}' not found in inventory.")
             return 
-        
+
         mrp = float(output[0]['MRP'])
         qty_avl = int(output[0]['Quantity'])
         cost_price = float(output[0]['Cost_Price'])
-
         log_activity(f"MRP of {product} : ₹{mrp}")
 
-        if qty <= qty_avl:
-            log_activity('NO ERROR - SUFFICIENT STOCK AVAILABLE')
+        if qty > qty_avl:
+            log_activity("❌ Purchase quantity exceeds available stock!")
+            log_activity(f"Available quantity for '{product}': {qty_avl}")
+            print(f"ERROR: Purchase quantity ({qty}) exceeds available stock ({qty_avl}) for '{product}'")
+            return
 
-            base_amount = mrp * qty
-            discounted_amount = base_amount * (1 - discount_rate)
-            
-            # --- Fetch GST Rates for Sale Amount Calculation ---
+        log_activity('NO ERROR - SUFFICIENT STOCK AVAILABLE')
 
-            mycursor.execute("SELECT State, IGST, CGST, SGST FROM SETTINGS LIMIT 1")
-            gst_settings = mycursor.fetchone()
-            company_state = gst_settings['State'].lower()
-            igst_rate = gst_settings['IGST']
-            cgst_rate = gst_settings['CGST']
-            sgst_rate = gst_settings['SGST']
-            
-            # Simple check for inter/intra state for Sale_Amount calculation
+        base_amount = mrp * qty
+        discounted_amount = base_amount * (1 - discount_rate)
+        
+        # 2. GST settings fetch and check
+        mycursor.execute("SELECT State, IGST, CGST, SGST FROM SETTINGS LIMIT 1")
+        gst_settings = mycursor.fetchone()
+        if not gst_settings:
+            log_activity("❌ Company GST settings missing. Please set up company details in settings before sales can be recorded.", "ERROR")
+            print("❌ ERROR: Company GST settings are missing. Please complete company setup (Settings) before making sales.")
+            return
 
-            if company_state in address.lower():
-                # Intra-state: CGST + SGST
-                total_tax_rate = cgst_rate + sgst_rate
-            else:
-                # Inter-state: IGST
-                total_tax_rate = igst_rate
-            
-            sale_amt = discounted_amount * (1 + total_tax_rate) # Calculate sale amount with GST
-            sale_amt = round(sale_amt, 2)
+        # Defensive: missing fields in the result dictionary
+        for key in ['State', 'IGST', 'CGST', 'SGST']:
+            if key not in gst_settings or gst_settings[key] is None:
+                log_activity(f"❌ GST field '{key}' is missing in SETTINGS table row: {gst_settings}", "ERROR")
+                print(f"ERROR: GST field '{key}' is missing in SETTINGS. SETTINGS row: {gst_settings}")
+                return
 
-            # Record the sale in the SALES table
-            mycursor.execute("INSERT INTO SALES (Customer_Name, Products, QTY, Sale_Amount, Date_Of_Sale) VALUES (%s, %s, %s, %s, %s)", 
-                             (custm_name, product, qty, sale_amt, today))
-            mycon.commit()
-            log_activity('SALE RECORDED IN DATABASE with values : ' + f"Customer_Name : {custm_name}, Products : {product}, QTY : {qty}, Sale_Amount : ₹{sale_amt}, Date_Of_Sale : {today}")
+        company_state = str(gst_settings['State']).lower()
+        igst_rate = float(gst_settings['IGST'])
+        cgst_rate = float(gst_settings['CGST'])
+        sgst_rate = float(gst_settings['SGST'])
 
-            # Retrieve the BillNo for the newly created sale
-            mycursor.execute(f"SELECT BillNo FROM SALES WHERE Customer_Name = %s AND Products = %s AND QTY = %s AND Sale_Amount = %s AND Date_Of_Sale = %s",
-                             (custm_name, product, qty, sale_amt, today))
-            bill_no = mycursor.fetchone()['BillNo']
-            log_activity(f"BillNo for the sale recorded : {bill_no}")
+        # Simple check for inter/intra state for Sale_Amount calculation
+        if company_state in address.lower():
+            total_tax_rate = cgst_rate + sgst_rate
+        else:
+            total_tax_rate = igst_rate
+        
+        sale_amt = discounted_amount * (1 + total_tax_rate)
+        sale_amt = round(sale_amt, 2)
 
-            # Record profit
-            profit = (discounted_amount / qty - cost_price) * qty
+        # 3. Insert sale and check for BillNo
+        mycursor.execute(
+            "INSERT INTO SALES (Customer_Name, Products, QTY, Sale_Amount, Date_Of_Sale) VALUES (%s, %s, %s, %s, %s)",
+            (custm_name, product, qty, sale_amt, today)
+        )
+        mycon.commit()
+        log_activity('SALE RECORDED IN DATABASE with values : ' + f"Customer_Name : {custm_name}, Products : {product}, QTY : {qty}, Sale_Amount : ₹{sale_amt}, Date_Of_Sale : {today}")
+
+        # Get last inserted BillNo robustly
+        bill_no = mycursor.lastrowid
+        if not bill_no:
+            # Fallback: Query with sale details, but warn/log
+            mycursor.execute(
+                "SELECT BillNo FROM SALES WHERE Customer_Name = %s AND Products = %s AND QTY = %s AND Sale_Amount = %s AND Date_Of_Sale = %s",
+                (custm_name, product, qty, sale_amt, today)
+            )
+            bill_row = mycursor.fetchone()
+            if not bill_row:
+                log_activity(f"❌ Could not retrieve BillNo after sale insert! Sale details: customer='{custm_name}', product='{product}', qty={qty}, amt={sale_amt}, date={today}", "ERROR")
+                print("ERROR: BillNo could not be found after recording sale!")
+                return
+            bill_no = bill_row['BillNo']
+
+        log_activity(f"BillNo for the sale recorded : {bill_no}")
+
+        # 4. Insert Profit and Loss row
+        try:
+            profit = (discounted_amount / qty - cost_price) * qty if qty > 0 else 0
             profit = round(profit, 2)
             mycursor.execute("INSERT INTO PROFIT_AND_LOSS (BillNo, Product_Name, Net_Profit) VALUES (%s, %s, %s)", (bill_no, product, profit))
             log_activity(f"Recorded Net Profit of ₹{profit} for BillNo : {bill_no}")
             mycon.commit()
+        except Exception as e:
+            log_activity(f"❌ Error inserting into PROFIT_AND_LOSS for BillNo={bill_no}: {e}", "ERROR")
+            print(f"ERROR: Could not insert into PROFIT_AND_LOSS for BillNo={bill_no}: {e}")
+            return
 
-            # Generate PDF invoice
+        # 5. Generate PDF invoice, handle error gracefully
+        try:
             gen_bill(bill_no, custm_name, address, product, qty, discount_rate)
-            log_activity("GST Invoice generated successfully for BillNo : " + str(bill_no))
+            log_activity(f"GST Invoice generated successfully for BillNo : {bill_no}")
             filename = f"GST_Invoice_{custm_name}_{bill_no}.pdf"
-
-            # Open in default PDF viewer
             filepath = os.path.abspath(filename)
-            webbrowser.open(f"file:///{filepath}") 
+            webbrowser.open(f"file:///{filepath}")
+        except Exception as e:
+            log_activity(f"❌ Error generating invoice for BillNo {bill_no}: {e}", "ERROR")
+            print(f"ERROR: Could not generate invoice: {e}")
 
-            # Record shipment info
-            record_shipment_cli(bill_no, address, status)     
+        # 6. Record shipment info
+        try:
+            record_shipment_cli(bill_no, address, status)
             log_activity(f"Recorded Shipment info for BillNo : {bill_no}")
+        except Exception as e:
+            log_activity(f"❌ Error recording shipment for BillNo {bill_no}: {e}", "ERROR")
+            print(f"ERROR: Could not record shipment: {e}")
 
-            # Update inventory
-            mycursor.execute("UPDATE PRODUCTS SET Quantity = Quantity - %s WHERE Product_Name = %s",(qty, product))
+        # 7. Update Products stock
+        try:
+            mycursor.execute("UPDATE PRODUCTS SET Quantity = Quantity - %s WHERE Product_Name = %s", (qty, product))
             mycon.commit()
             log_activity(f"Inventory updated: {qty} units of '{product}' deducted.")
-
-        else:
-            log_activity("\nPurchase quantity exceeds available stock!")
-            log_activity(f"Available quantity for '{product}': {qty_avl}")
+        except Exception as e:
+            log_activity(f"❌ Error updating inventory for Product '{product}': {e}", "ERROR")
+            print(f"ERROR: Could not update inventory for '{product}': {e}")
 
     except Exception as e:
-        log_activity(f"An error occurred in record_sale: {e}")
-
+        log_activity(f"❌ An error occurred in record_sale: {e}", "ERROR")
+        print(f"ERROR: Exception in record_sale: {e}")
 def remove_sale_cli():
 
     """CLI function to delete a sale record by BillNo."""
@@ -586,7 +621,7 @@ def gen_bill(bill_no, customer_name, customer_address, product, qty, discount_ra
         mrp = mrp_data['MRP']
         log_activity(f"Product MRP fetched: ₹{mrp}")
         filename = f"GST_Invoice_{customer_name}_{bill_no}.pdf"
-        logo_path = "logo.png"
+        logo_path = r"C:\Users\logo.png"
 
         doc = SimpleDocTemplate(
             filename, pagesize=A4,
@@ -870,6 +905,8 @@ def print_divider():
 
 def main_menu():
 
+    checks_cli()
+
     while True:
         print("Main Menu:")
         print("1. User Management")
@@ -1123,7 +1160,16 @@ def main_menu():
 
                 elif ch == 'b':
                     table_name = input("Enter the table name to export: ")
-                    export_table_to_csv(table_name)
+                    filepath = export_table_to_csv(table_name)
+                    if filepath and os.path.exists(filepath):
+                        log_activity(f"Opening exported CSV file: {filepath}")
+                        try:
+                            # Open file with default app (works on Windows/macOS/Linux)
+                            webbrowser.open(f"file:///{os.path.abspath(filepath)}")
+                        except Exception as e:
+                            log_activity(f"Could not open file automatically: {e}")
+                    else:
+                        log_activity("Error: CSV export failed or file not found.")
                     print_divider()
 
                 elif ch == 'c':
